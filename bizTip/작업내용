@@ -107,5 +107,5 @@
               bts: DEBUG
 
 ----- fw-feign-lib 개발
-      -- Open Feign 적용
+      -- Open Feign 적용(Connection/Read Timeout, log level)
         . FeignConfig
