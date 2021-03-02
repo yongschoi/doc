@@ -1,0 +1,29 @@
+----- API first Design
+      1. API 사용자 관점에서 가장먼저 Design 되어야 한다.(이후 application 개발)
+      2. application의 변경은 자주 발생 가능하나 API는 변경이 잦으면 안된다.
+      3. 반드시 문서화 되어야 한다.
+
+----- API 찾기
+      1. External Gateway 관점
+         . 화면 중심으로 도출
+         . TX 단위와는 무관하게 서로 다른 서비스 조합
+      2. Internal Gateway(Service Mesh) 관점
+         . 데이터(업무) 중심으로 도출
+         . TX 단위 orchestration
+
+----- API Versioning
+      . URI Versioning
+        예) http://api.example.com/v1/employee/12345
+            http://apiv1.example.com/employee/12345
+
+      . Custom Request Header
+        예) http://api.example.com/employee/12345
+            Accept-version: v1
+            Accept-version: v2
+
+      . Accept Header(Github의 방식)
+        예) http://api.example.com/employee/12345
+            Accept: application/vnd.example.v1+json
+            Accept: application/vnd.example+json;version=1.0
+
+      * Header를 이용할 경우 헤더값을 검사하기 위한 추가적인 로직이 필요함

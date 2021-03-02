@@ -1,0 +1,103 @@
+----- docker 일반 컨테이너 접속하기
+      docker exec -it bd32732a7da9 /bin/bash
+
+      Redis: docker exec -it bd32732a7da9 redis-cli
+      mongo: docker exec -it bd32732a7da9 mongo
+
+----- docker network 이름으로 통신하는 경우
+      docker run --name AAA --network=YONGS-NET -p 8080:80 으로 실행했을경우
+      호스트에서 접근할 경우 http://localhost:80 으로 접근
+      다른 컨테이너에서 AAA 컨테이너에 접근할 경우 http://AAA:8080 으로 접근
+      (80이 아님. 즉, -p 외부port:내부port)
+
+----- docker-compose
+      stop: container를 정지함
+      down: container와 networks를 정지 및 삭제한다.
+
+----- Docker network
+      컨테이너간 통신은 단일 host 내에서만 가능하므로, 멀티 host의 컨테이너가 통신을 하기 위해서 kubernetes와 같은 orchestration 도구를 사용한다.
+      . Docker gateway: docker0
+      . Kubernetes gateway: cni0
+
+----- Container Orchestration
+      . Cluster: Node Group
+      . State: replicas
+      . Scheduling: 서버 자원을 고려한 배포관리
+      . Rollout Rollback: 버전관리
+      . Service Discovery: 설정 변경관리
+      . Volume: Resource Mount
+
+----- kubernetes
+      -------------------------- Cluster ---------------------------
+      |               (Master)                                     |
+      |   Scheduler  Controller Controller                         |
+      |           \      |      /                                  |
+      |                 API -------------------------- (Node)      |
+      |                  |   \                          -proxy     |
+      |                 etcd  \                         -kubelet   |
+      |                        \                                   |
+      |                         \--------------------- (Node)      |
+      |                                                 -proxy     |
+      |                                                 -kubelet   |
+      --------------------------------------------------------------
+
+----- minikube
+      # minikube start
+      # minikube stop
+      # minikube delete // 클러스터 삭제 (모든 정보가 사라진다.)
+
+----- minikube 실행하기
+      minikube start에 문제가 발생하는 경우
+
+      root가 아닌 해당 사용자를 docker그룹에 추가
+      sudo usermod -aG docker $USER # 현재 접속중인 사용자에게 권한주기
+
+----- kubernetes의 서비스를 브라우저에서 access 하는 방법
+      1. port-forwarding해서 localhost로 접근
+      # kubectl port-forward service/hello-minikube 8888:8080
+
+      2. NodePort type으로 설정
+      # minikube service hello-minikube --url
+
+      3. (클라우드 공급자가 로드 밸런서를 지원하면) LoadBalancer type으로 설정
+      External IP로 접근
+
+----- minikube에서 local docker 이미지 사용하기
+      docker zone과 mikube zone은 구분되어 있으므로, docker env를 minikube로 설정해 준다.
+      # eval $(minikube docker-env)
+
+----- ECK(Elastic Cloud on Kubernetes)
+
+----- kubernetes에서 image update
+      1. kubectl set image deployment/[target] [container]=[이미지:버전] --record
+      # kubectl set image deployment/nginx-deployment nginx=nginx:1.16.1 --record
+
+      2. 롤아웃
+      # kubectl rollout status deployments/nginx-deployment
+
+      3. 롤백
+      # kubectl rollout undo deployments/nginx-deployment
+
+----- kubernetes Volume
+      1) emptyDir: volumeMounts에서 정의된 path를 통해서 컨테이너간 폴더 공유
+      2) hostPath: 노드의 로컬 디스크의 경로를 Pod에서 마운트(docker에서 -v 옵션 사용하는 방식)
+
+      * Windows 노드 풀이 있는 클러스터를 사용 중인 경우 Windows에서 기본 fstype, ext4를 지원하지 않으므로 StorageClass를 만들고 PersistentVolumeClaim에 StorageClassName을 지정해야 한다.
+
+----- 컨테이너 image 관리
+      프로덕션에서 컨테이너를 배포할 때는 latest 태그를 사용하지 않아야 한다. 실행 중인 이미지 버전을 추적하기가 어렵고 이전에 잘 동작하던 버전으로 롤백하기가 더 어렵다.
+
+----- imagePullPolicy: Always
+      항상 강제로 image를 pull한다.
+
+----- kubernetes labels
+      검색에 사용하기 적합하므로 사용자에게 중요하지만, 코어 시스템에 직접적인 의미는 없다. 따라서 많은 오브젝트에 같은 레이블을 가질수 있다.
+
+----- host mode
+      . docker run --net=host ...
+      . docker-compose
+          ...
+          network_mode: "host"
+
+      docker0 인터페이스를 사용하지 않고 Host OS의 eth0 인터페이스 사용. 즉, 컨테이너를 docker name이 아닌 localhost:XXXX 로 접근
+      * 이렇게 구성하면 docker 컨테이너 환경에서는 문제없으나, local host의 개발환경(intellij)과의 연동이 잘(?) 안됬음 ㅠ.ㅠ

@@ -1,0 +1,33 @@
+----- Batch 테이블 join
+select A.JOB_INSTANCE_ID as id, A.JOB_NAME as name, B.START_TIME as stime, B.END_TIME as etime, B.`STATUS` as status
+from  BATCH_JOB_INSTANCE as A
+inner join BATCH_JOB_EXECUTION as B on A.JOB_INSTANCE_ID = B.JOB_INSTANCE_ID
+left  join BATCH_JOB_EXECUTION_PARAMS as C on B.JOB_EXECUTION_ID = C.JOB_EXECUTION_ID
+where B.EXIT_CODE != 'NOOP'
+group by id
+order by id desc
+
+
+
+----- Batch 테이블 join 성능개선
+select *
+from(
+  select A.JOB_INSTANCE_ID as id, B.JOB_EXECUTION_ID as ex, A.JOB_NAME as name, B.START_TIME as stime, B.END_TIME as etime, B.`STATUS` as status
+  from  BATCH_JOB_INSTANCE as A
+  inner join BATCH_JOB_EXECUTION as B on A.JOB_INSTANCE_ID = B.JOB_INSTANCE_ID
+  left  join BATCH_JOB_EXECUTION_PARAMS as C on B.JOB_EXECUTION_ID = C.JOB_EXECUTION_ID
+  where B.EXIT_CODE != 'NOOP'
+  group by ex
+  order by ex desc) t
+group by t.id
+order by t.id desc
+
+
+
+----- Batch 일자별 분포
+select DATE_FORMAT(BATCH_JOB_EXECUTION.START_TIME, '%m/%d') as dd, count(*)
+from BATCH_JOB_EXECUTION
+where DATE(BATCH_JOB_EXECUTION.START_TIME)
+between '2020-12-01' and '2020-12-21'
+group by dd
+order by dd desc

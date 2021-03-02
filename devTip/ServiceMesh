@@ -1,0 +1,31 @@
+----- ESB(Enterprise Service Bus) Vs. Service Mesh
+      . ESB: 중앙집중형
+      . Service Mesh: 마이크로 서비스별 경량화 Proxy
+
+----- Service Mesh 구현체
+      API Gateway가 outer architecture 관점에서 Service Discovery, Routing 관련 기능을 수행한다면, Service Mesh는 inner architecture 관점에서 Service Discovery, Routing 관련 기능 수행
+      --> Envoy Proxy를 활용한 Istio (인프라 레벨에서 적용)
+
+----- API Gateway VS. Service Mesh
+      Service Discovery, Routing, Circuit Breaker와 같은 일부 동일한 기능을 가지고 있지만,
+      . API Gateway: 비지니스 API 정의(API Gateway -> Service Mesh -> Microservice)
+      . Service Mesh: 서비스 메시는 비즈니스 개념이 없는 서비스 간 통신 인프라 일뿐이다. 서비스 메시는 Gateway와 달리 마이크로서비스별로 하나씩 proxy형태로 존재한다.(sidecar)
+
+----- Service Mesh 적용방안
+      . Implementation Type : Spring Cloud 적용(Java only)
+      . Installation Type : Istio 적용(언어 무관, 도커로 설치 가능)
+
+----- Envoy Proxy
+      간단하게 정의하면 Service Mesh를 구현한 Open Source로 L7 라우팅, TLS, Circuit Breaker 등 다양한 기능 제공. 보통 하나의 <Service 컨테이너>에 하나의 <Proxy 컨테이너>를 배치함.(sidecar)
+
+----- Istio
+      Envoy Proxy를 활용한 Service Mesh 구현체(인프라 레벨에서 적용하므로 언어와 상관없음)
+      . 트래픽 통제(카날리 테스트): 기존 버전 API(95%), 신규 버전 API(5%)
+      . 컨텐츠 기반 트래픽 분할: HTTP 헤더의 User-agent에 따라 안드로이드, IOS 구분
+      . 서비스 디스커버리
+      . Loging, Security, Discovery, Routing, Retry, Timeout, Circuit breaker 기능 수행
+
+----- 서비스 메쉬 적용 시 고려사항
+      . 복잡성: 서비스 메쉬를 사용하면 런타임 인스턴스 수가 증가(최소 2배수)
+      . 사이드카 컨테이너 수 증가: 서비스 운영 관점에서 적용여부 검토 필요
+      . 기술력의 미성숙: 이스티오는 빠르게 발전하고 있으나 아직은 새롭고 미성숙

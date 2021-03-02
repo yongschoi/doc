@@ -1,0 +1,85 @@
+----- Vue-SpringBoot 연동
+      Vue 소스(npm run build에 의해 dist/에 생성된 파일)를 어디에 배포하냐에 따라 2가지 방식이 존재함.
+
+      1. Vue소스를 기존 SpringBoot소스와 함께 배포(소규모?)
+         dist/에 생성된 index.html과 static/ 파일들은 정적인 소스이다.
+         따라서 SpringBoot의 resource/static 에 배포소스를 넣으면 됨.
+         단, Reactive환경에서 static 리소스 지원이 가능한지는 확인이 필요함.
+
+      2. Vue소스를 별도 웹서버에 배포(npm install axios 필요)
+         dist/에 생성된 파일을 Nginx와 같은 웹서버의 정적 html를 서비스하는 폴더에 배포함.
+         Nginx의 경우에는 /usr/share/nginx/html에 Vue소스를 배포함.
+         단, 이럴경우 Vue에서 SpringBoot을 Remote API 호출하게 되므로 CORS이슈가 발생함.
+         2-1. SpringBoot에서 CORS 필터등을 이용하여 Vue 호출을 허용해야함.
+         2-2. Vue 에서 header를 설정하여 해결하는 방법도 있음.
+
+----- axios Docker 네트워크 이슈
+      Vue에서 Rest 호출을 위한 통신모듈로 axios 사용시,
+      일반(?)적인 환경에서는 문제가 없으나
+      (예: target = 'http://127.0.0.1:7070')
+
+      도커 컨테이너 환경에서는 컨테이너 이름을 찾지 못하는 이슈가 있다
+      (예: target = 'http://flex-todo:7070')
+      axios에서 http가 아닌 xhr을 호출하는 문제라고 하는데 정확한 원인은 현재 모름
+
+      가장 유사한 사례
+      https://stackoverflow.com/questions/50263684/docker-compose-networking-with-axios-node-error-enotfound
+
+      ping example-user:8080 도 잘 되는데, axios는 호출하지 못함.
+
+      https://github.com/axios/axios/issues/1418 <-- 해결방법이라는데 안됨.
+
+----- axios Docker 네트워크를 호출 못하는 이유
+      axios는 브라우저의 script에서 실행되므로, 결국 클라이언트 환경(노트북 등)에서 "http://" 를 하므로 docker name 호출은 불가능하다. 브라우저의 script는 클라이언트에서 실행된다는 사실을 명심하자.(이것땜에 약 2일동안 뻘짓함 ㅠㅠ)
+
+----- axios.get 특이사항
+      1. @RequestBody는 axios에서 POST/PUT과 함께 사용하며, GET요청에는 'body' 부분이 없기 때문에 axios-Spring 연동시 HttpMessageNotReadableException을 발생 시킨다.(but, Postman에서는 잘 실행됨)
+
+      2. axios.get(url, params옵션, config)를 사용하면 url?name=aaa&email=bbb 이런 형식으로 호출되므로 Controller에서는 @GetMapping("url") @RequestParam("name")으로 name 값을 가져와야한다.또한, parameter 옵션을 사용하지 않고 일반적인 rest 형식으로 다음과 같이 호출하면 axios.get(url/name, config)를 사용하면 Controller에서는 @GetMapping("url/{name}") @PathVariable("name")으로 name값을 가져올 수 있다.
+
+      axios.get(url, params옵션, config): @GetMapping("url") @RequestParam("name")
+      axios.get(url/name, config): @GetMapping("url/{name}") @PathVariable("name")
+
+----- CORS(Cross Origin Resource Sharing) 이슈
+      GET/POST 요청은 정상적으로 동작하는데 PUT 요청 시 403 에러가 발생하는 경우 addCorsMappings에서 명시적으로 method를 추가해준다.
+
+      registry.addMapping("/**")
+        .allowedOrigins("http://localhost:8080")
+        .allowCredentials(true)
+        .allowedHeaders("*")
+        .allowedMethods(
+          HttpMethod.GET.name(),
+          HttpMethod.HEAD.name(),
+          HttpMethod.POST.name(),
+          HttpMethod.PUT.name(),
+          HttpMethod.DELETE.name());
+
+      Spring Cloud Gateway에서도 명시적으로 설정한다.
+      # application.yml
+      cloud:
+        gateway:
+          globalcors:
+            cors-configurations:
+              '[/**]':
+              allowedOrigins: "http://localhost:8080"
+              allow-credentials: true
+              allowed-headers: "*"
+              allowedMethods:
+                - GET
+                - HEAD
+                - POST
+                - PUT
+                - DELETE
+
+----- CORS configuration 설정
+      - web: WebMvcConfigurer 구현체는 Zuul Gateway에만 존재하면 됨.(뒤에 있는 서비스는 필요없음)
+
+----- SpringBoot에서 fallback 실행
+      backend에서 fallback이 실행되고 status 200이면  front입장에서는 정상적으로 동작한 것임.
+      따라서 backend에서 fallback을 어떻게 처리하냐에 따라
+      front에서 관련 처리를 then에서 할지 catch에서 할 지가 결정됨
+
+----- Spring Cloud Gateway(WebFlux)
+      PreFilter와 PostFilter 정의 방식이 다름
+      preFilter:  @Component로 일반적인 방식으로 정의
+      postFilter: @Bean으로 configuration에서 등록하고 reactive하게 동작하므로 정의 방식이 다름(flex-gateway 참고)

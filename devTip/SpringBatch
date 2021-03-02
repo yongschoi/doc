@@ -1,0 +1,114 @@
+----- 기본구조
+      I/O 최소화 : 최대한 적은 횟수로 데이터를 read -> process -> write
+      <Step>
+      . ItemReader: (Paging으로)배치데이터를 읽어오는 인터페이스입니다.
+      . ItemProcessor: 읽어온 데이터의 변환 혹은 필터링. 즉, 비즈니스 로직을 처리(필수는 아님)
+      . ItemWriter: 처리한 데이터를 DB(또는 파일)에 저장합니다.
+      <Job>
+      한개 이상의 Step이 모여서 Job을 구성
+
+----- chunk
+      한 번의 TX단위(commit 단위), 실패할 경우엔 해당 Chunk 만큼만 롤백
+      * 성능측면에서 mongodb에서는 큰 영향없음
+      . Reader(1건): 데이터를 하나 읽어옵니다
+      . Processor(1건): 읽어온 데이터를 가공
+      . Writer(Chunk): 가공된 데이터들을 별도의 공간에 모은 뒤, Chunk 단위만큼 쌓이게 되면 일괄처리
+      * PagingItemReader에서 Page Size는 조회할 item의 size
+      chunk size와 page size는 서로 의미는 다르지만 여러 이슈로 2개 값을 일치시키는 것이 좋다.
+
+----- thread-safe
+      Spring Batch에서 멀티쓰레드 환경을 구성하기 위해서 가장 먼저 해야할 일은 사용하고자 하는 Reader와 Writer가 멀티쓰레드를 지원하는지 확인.
+      RDB데이터를 control할 경우에는 thread-safe한 PagingItemReader를 사용한다.
+
+----- 병렬처리 카테고리
+      1. Multi-threaded Step (single process)
+         * restart 불가능
+      2. Parallel Steps (single process)
+      3. Remote Chunking of Step (multi process)
+      4. Partitioning a Step (single or multi process)
+         * restart 가능
+         * Partitioner는 Data 영역만 나누는 역할을 한다. 조건등은 reader에서 정의해야 함
+      5. AsyncItemProcessor / AsyncItemWriter
+
+----- Spring Restartability
+      일반적으로 Job은 실패한 시점에서 다시 재 시작을 할 수 있어야 하나, 경우에 따라 재시작 시점을 알 수 없는 경우가 존재한다. 이럴경우 job의 restarable="false"로 설정하여 수동으로 재처리 해야 한다.
+      Partitioning a Step 방식으로 구현하면 이 문제점을 어느정도 극복(?)할 수 있다.
+
+----- Meta정보
+      1. Table 스키마 위치: spring-batch-core-xxx/org.springframework.batch.core/
+      2. 주요 테이블
+         . BATCH_JOB_INSTANCE : Job Parameter=20201201로 실행한 Job(최초1회)
+         . BATCH_JOB_EXECUTION : Job Parameter=20201201로 실행한 모든 Job(성공하든 실패하든)
+         . BATCH_JOB_EXECUTION_PARAMS : Job Parameter 저장. DATE_VAL은 1970년 ??
+
+----- Spring Batch
+      1. SimpleJob은 예약어이므로 Class이름으로 정의하면 안됨.
+      2. 동일한 Job Parameter로 성공한 기록이 있으면 재수행이 안됨.
+      3. application.yml에 spring.batch.job.names를 ${job.name:NONE}으로 설정하면 원하는 Batch Job만 수행한다. job.name이 지정하면 그 job을 할당하고 없으면 NONE을 할당해서 모든 배치가 실행되지 않도록 한다.
+      4. BatchStatus: Job또는 Step의 실행 결과( COMPLETED, STARTING, STARTED, STOPPING, STOPPED, FAILED, ABANDONED, UNKNOWN)
+      5. ExitStatus: Step의 실행 후 상태. 기본적으로 ExitStatus는 BatchStatus와 같도록 설정
+      6. @Bean
+         @StepScope
+         로 지정하면 Boot실행 초기에 Bean을 생성하는것이 아니라 Step 실행시점으로 Bean 생성을 지연시킴. @JobScope도 동일.
+      7. Job Parameters는 @StepScope, @JobScope Bean을 생성할때만 사용가능
+      8. Job Parameters를 @Value("#{jobParameters[pathToFile]}")가 아닌 일반 시스템 변수로 사용할 경우 Meta 테이블로 관리되지 않음
+
+----- Controller에서 Job을 실행시키는 예제(비권장)
+      @Slf4j
+      @RequiredArgsConstructor
+      @RestController
+      public class JobLauncherController {
+        private final JobLauncher jobLauncher;
+        private final Job job;
+
+        @GetMapping("/launchjob")
+        public String handle(@RequestParam("fileName") String fileName) throws Exception {
+          try {
+            JobParameters jobParameters = new JobParametersBuilder()
+                                    .addString("input.file.name", fileName)
+                                    .addLong("time", System.currentTimeMillis())
+                                    .toJobParameters();
+            jobLauncher.run(job, jobParameters);
+          } catch (Exception e) {
+            log.info(e.getMessage());
+          }
+
+          return "Done";
+        }
+      }
+
+----- Database Reader
+      1. Cursor 방식(JdbcCursorItemReader) :
+         . DB에 커넥션(채널)을 맺은 다음 Cursor를 1row씩 옮기면서 "Streaming"으로 데이터 처리.
+         . Database와 SocketTimeout을 충분히 큰 값으로 설정
+      2. Paging 방식(JdbcPagingItemReader) :
+         . 지정한 row수 만큼 한방에 가져온다.
+         . Batch 수행 시간이 오래 걸리는 경우에는 일반적으로 PagingItemReader
+         . 정렬(Order)이 무조건 포함되어야 함
+
+         * IbatisReader는 Spring Batch 공식지원에서 삭제 -> JDBC로 변경 추천
+         (MyBatis는 별도로 진행 http://www.mybatis.org/spring/ko/batch.html)
+
+----- RowMapper
+      쿼리 결과를 Java 인스턴스로 매핑
+      예)
+      .rowMapper(new BeanPropertyRowMapper<>(Pay.class))
+      .sql("SELECT id, amount, tx_name, tx_date_time FROM pay")
+
+----- Jenkins에서 batch 실행
+      java -jar $1 $2 --job.name=$3 version=$4 로 실행
+
+----- BatchStatus Vs. ExitStatus
+      . BatchStatus(STATUS) : enum type이며 배치 Job 상태
+      . ExitStatus(EXIT_CODE) : string type이며 배치 Job 종료 후 상태
+
+----- example-batchmanager
+      . COMPLETE JOB은 EXIT_CODE='COMPLETED'를 기준으로 조회한다.
+      . EXIT_CODE='UNKNOWN'은 JobInstance already exists and is not restartable 로 재시작 할 수 없음. JOB REMOVE 기능을 통하여 alert을 disable하도록 함
+      . EXIT_CODE 링크를 통한 Step 리스트는 실행 시점의 리스트이므로 만약 3개의 Step이 있는 Job이 Step1은 이미 성공했고 마지막 시점에 Step2, Step3이 성공했다면 Step리스트는 마지막 성공 리스트인 2개의 Step만 나온다. Job과 Step은 각각 개별 실행 주체이다.
+
+
+
+
+
+      

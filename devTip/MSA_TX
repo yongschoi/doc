@@ -1,0 +1,122 @@
+----- MSA환경에서 비동기 트랜잭션 요건
+      . Redundancy : 서비스가 실패하더라도 재처리 가능
+      . 보장성 : Message Queue에 들어간 Message는 최소 한번은 처리
+      . 확장성 : 다수의 Message Queue를 두어 많은 요청에 대해 유연하게 확장
+      . Resilience : 전체 시스템에 대한 영향이 적고, 회복 탄력성 향상
+
+----- SAGA 패턴
+      분산 트랜잭션 중에 가장 널리 알려진 패턴이 SAGA 패턴이다. SAGA는 각 트랜잭션이 단일 서비스 내의 데이터를 갱신하는 일련의 로컬 트랜잭션이다. 첫번째 트랜잭션이 완료되고 난 후 두번째 트랜잭션은 이전의 작업 완료에 의해 트리거 되는 방식이다.
+      구현관점에서 모든 transaction에 대하여 Compensation transaction도 함께 구현되어야 한다.(forward recovery일 경우에는 필요없음)
+      SAGA는 ACID(데이터 무결성) 보증을 제공하지는 않지만 최종적인 데이터 일관성을 유지할 수 있는 시나리오임
+      all commit or rollback → eventually consistency
+
+      . Saga Recovery
+        backward recovery: tx가 하나만 실패되도 모두 보상 : compensates all completed transactions if one failed
+        forward recovery: 모든 sub tx가 결국 성공할 것으로 가정하고 실패한 tx를 (성공할때까지?) 재시도 : retries failed transactions, assuming every sub-transaction will eventually succeed
+
+      참고) https://blog.couchbase.com/saga-pattern-implement-business-transactions-using-microservices-part/
+
+----- TCC(Try-Confirm/Cancel) 패턴
+      기존 2-Phase commit과 프로세스가 유사하다.
+      단, DB에 2개의 Table(Stock, ReservedStock)을 활용하여 2단계로 처리하는 방식이다.
+      Try 단계에서는 HTTP POST Method로 ReservedStock에 데이터를 넣고(재고 계산시 Reserved 테이블을 반영한다)
+      ReservedStock의 id를 사용하여 Confirm 하거나 Cancel(ReservedStock삭제)할 수 있는 URI을 생성한다.
+      Confirm 단계에서 HTTP PUT Method(idempotent:멱등성)로 ReservedStock데이터를 가져와서 Stock Table에 저장한다.
+      Confirm단계에서 MQ를 활용하여 결과적 일관성을 구현할 수도 있다.
+
+      TCC는 예약된 데이터를 취소할 뿐, 실질적인 rollback은 없음.(Eventually Consistency 지향)
+      TCC는 예약 거래를 통해 all commit의 확률을 높이는 방식임
+      이럴가능성은 매우 희박하지만 1. (예약된)결제가 되고 2. (예약된)재고를 차감 하려고 하는데 재고가 없으면? 언제까지 재고를 기달려? 이럴경우 일관성 유지하려면 결제를 취소해야 되지 않나 ?
+      결과적 일관성을 적용하려면 1. (예약된)재고를 차감하고 2. (예약된)결제를 하려고 하는데 결제가 안되면? 이런경우에는 재시도를 여러번 하는 방식으로 일관성 유지가 가능하다.
+
+      참고) https://www.popit.kr/rest-%EA%B8%B0%EB%B0%98%EC%9D%98-%EA%B0%84%EB%8B%A8%ED%95%9C-%EB%B6%84%EC%82%B0-%ED%8A%B8%EB%9E%9C%EC%9E%AD%EC%85%98-%EA%B5%AC%ED%98%84-1%ED%8E%B8/
+
+----- Eventually Consistency(결과적 일관성, 최종 일관성)
+      RDB 환경에서는 Strict Consistency(엄격한 일관성) 모델을 사용하지만, 분산(MSA) 환경에서는 비동기(MQ) 혹은 재처리를 통하여 언젠가(미래시점)는 일관성을 유지하는 모델을 지향한다. Eventually Consistency는 비즈니스 관점에서도 소비자-판매자 모두 이익이다. 단, Real Time이 아니므로 단기적 일관성이 깨졌을 경우를 대비한 화면 처리가 필요하다.(결제가 완료되지는 않았지만 사용자에게는 구매 완료 메시지를 보여줌)
+      all or nothing --> eventually consistency
+
+----- EDM(Event Driven + MSA) 효과
+      . 비즈니스 흐름 : 상태변화(data의 CUD)에 따라 흐름 진행
+      . 분산 transaction 처리 : Rollback이 필요한 경우 Failed 이벤트를 발생시키고, 이전 스텝을 수행한 서비스에서 해당 메시지를 구독하여 보관되어 있던 이벤트 로그 기반으로 rollback을 수행
+      . 반정규화 데이터의 동기 처리 : 서비스가 커져가면서 복잡성/성능 등의 사유로 서비스 간 데이터 반정규화가 발생할 수 있는데 CUD가 발생하면 이벤트 발행하여 동기화 수행
+      . 비동기 메세지 큐를 통한 시스템 내 통합 : MSA에서 통신방식은 2가지 REST(R), 메시지 Queue(CUD)
+      . Eventually Consistency : 결과적 일관성
+
+----- Event Driven Architecture
+      . 일관성: 각 서비스 별 db가 변경(CUD)되었을때 변경사항 event를 발행하면, 또 다른 서비스에서 해당 event를 subscribe하고 있다가 해당되는 기능을 수행함. 즉, 기존 절차적 방식은 caller가 callee를 알아야 하지만 event driven에서는 callee가 caller를 알아야 함.(이벤트 추적관리를 위해 caller - callee 관계 명시가 필요할 것 같은데...)
+      . 데이터 join 지양: 통합 View(고객, 주문, 금액 등) 서비스가 존재하고 각 서비스(고객, 주문, 금액)에서 이벤트가 발생하면 통합 View는 해당 이벤트를 모두 구독하고 자신의 데이터를 갱신
+      . 이벤트 발행 방식2가지:
+        1. 로컬 TX를 이용하여 이벤트 테이블 생성 -> 이벤트 발생
+        2. DB TX로 로그를 이용 -> 이벤트 발생
+      참고) https://futurecreator.github.io/2018/10/19/microservices-and-event-driven-data-management/
+
+----- MQ
+      queuing기반: point-to-point 방식으로 receiver중 하나에게만 메시지를 전달
+      publish-subscribe기반: subscriber 모두에게 broadcasting
+
+      . Kafka는 이를 혼용하는 방식으로 topic을 동일그룹 내에서 하나의 consumer에게만 전달한다. 이를 broadcasting하려면 즉, publish-subscribe기반으로 동작하게 하려면 서로 다른 그룹에 있도록 설정하면 된다.
+
+----- Kafka 체크사항
+      일종의 Message Queue로 Zookeeper(Eureka와 비슷한 Service Discovery & Registry)가 Kafka Cluster를 관리함. 일반적으로 consumer그룹의 consumer수와 partition개수를 동일하게 셋팅하는 것을 권장하며, 하나의 Topic을 여러 partition에 병렬로 write하므로 성능이 우수하다.
+      단, 한번 늘린 파티션은 절대로 줄일 수 없기 때문에 운영중에 파티션을 늘려야 하는건 충분히 고려해 봐야한다. 파티션에 Round-robin으로 write하므로 파티션을 늘렸을때(병렬처리 수를 늘린다는 의미) 순서 보장이 되지 않는다.
+      또한, 반드시 해당 topic의 파티션은 그 consumer group과 1:n 매칭을 해야한다. 즉, 하나의 파티션을 서로 다른 consumer가 읽을 수 없다.
+
+      . ack (default:1)
+        0 : 프로듀서는 서버로부터 어떠한 ack도 기다리지 않음. 유실율 높으나 높은 처리량
+        1 : 리더는 데이터를 기록, 모든 팔로워가 확인하지는 않음
+        -1(또는 all) : 모든 ISR(In Sync Replica)이 확인. 무손실 but 낮은 처리량
+
+      . MSA환경에서 트랜잭션 처리 방안으로 활용될 수 있음
+        Order -> (MQ) -> Stock -> (MQ) -> Payment -> (MQ) -> Delivery -> (MQ) -> Order
+        설계시, 무한루프에 빠지지 않도록 유념해야 함
+
+      . Topics 설계 Type
+        1. 프로세스 용 Topics 정의(Next 서비스를 명시적으로 지정하는 queuing기반)
+           Order -> (MQ) -> Stock -> (MQ) -> Payment -> (MQ) -> Delivery
+        2. 특정 data 일관성 유지 용 Topics 정의(불특정 관련 서비스에 브로드캐스팅하는 publish-subscribe기반)
+           Delivery 데이터 변경 -> (MQ) -> 변경된 Delivery 데이터를 필요로 하는 유관서비스
+           이런 유형의 Topics는 rollback이 존재하지 않는다. 브로드캐스팅 방식이라 rollback 개념이 필요없음.
+
+       . Acknowledgment
+         enable-auto-commit: false
+         @KafkaListener 메소드에서 사용하는 속성으로 acknowledgment()는 명시적으로 메시지를 소비했다는 신호이다. 즉, acknowledgment()가 실행되지 않으면 메시지는 소비되지 않았다는 의미다. 따라서 @KafkaListener 메소드에서 acknowledgment() 실행되기 전에 error가 발생하면 그 메시지는 kafka에서 사라지지 않는다.(사라질때까지 무한실행)
+         enable-auto-commit: true
+         @KafkaListener 메소드가 실행되면 error가 발생되도 해당 메시지는 이미 소비한 것이다.
+
+----- MSA Demo with Spring Cloud - Order 시나리오
+      Order -> (kafka) -> Stock -> (kafka) -> Payment -> (kafka) -> Delivery -> (kafka) -> Order(저장)
+      파라미터는 String type으로 하는것이 코딩이 쉬움. 만약 Object type으로 하게 되면 Serializer/Deserializer 관련 셋팅을 해줘야 한다.
+      또한, VO를 전달할 경우 가급적 필드까지 동일해야 한다. 그렇지 않으면 Serializer/Deserializer하면서 JsonProcessingException이 발생할 수 있다.
+
+----- yongs-order/yongs-stock/yongs-payment/yongs-delivery event 구현내용 설명
+
+      <단계별 send topic>
+      1. Order : ORDER_STOCK_EVT = "order-to-stock"
+      2. Stock : STOCK_PAYMENT_EVT = "stock-to-payment"
+         STOCK_ROLLBACK_EVT = "stock-rollback"
+      3. Payment : PAYMENT_DELIVERY_EVT = "payment-to-delivery"
+         PAYMENT_ROLLBACK_EVT = "payment-rollback"
+      4. Delivery : DELIVERY_ORDER_EVT = "delivery-to-order"
+         DELIVERY_ROLLBACK_EVT = "delivery-rollback"
+      5. Order 저장 : 수동커밋을 활용한 재시도 메커니즘을 적용하여 ROLLBACK_EVT가 없다.
+         *  ROLLBACK_EVT가 없다는 것은 Eventually Consistency를 지향하겠다는 의미.
+      6. Delivery Update : DELIVERY_UPDATE_EVT = "deliveryUpdate" (배송업체 선택 등, 실질적인 Delivery data생성)
+
+      <단계별 @KafkaListener topic>
+      1. Order : DELIVERY_ORDER_EVT = "delivery-to-order"
+         rollback> @KafkaListener(topics = {"stock-rollback", "payment-rollback", "delivery-rollback"})
+         참고로 order는 rollback을 발생하지 않도록 Acknowledgment mode로 설정함.
+      2. Stock : ORDER_STOCK_EVT = "order-to-stock"
+         rollback> @KafkaListener(topics = {"payment-rollback", "delivery-rollback"})
+      3. Payment : STOCK_PAYMENT_EVT = "stock-to-payment"
+         rollback> @KafkaListener(topics = {"delivery-rollback"})
+      4. Delivery : PAYMENT_DELIVERY_EVT = "payment-to-delivery"
+
+      ROLLBACK_EVT는 설계를 통해서 개별적으로 셋팅해야 한다. 그렇지 않으면 무한루프에 빠질 수 있음.
+
+----- MSA TX 방식 기준
+      . CUD method : MQ 사용
+        => yongs-order/OrderEventService 참조
+      . R method :
+        RestTemplate => yongs-user/AnyController 참조
+        WebClient => flex-employeestatus/EmployeeStatusController 참조

@@ -1,0 +1,172 @@
+----- Netty is an asynchronous event-driven network application framework
+      Client/Server 양방향 연결지원
+
+----- Servlet 3.1+
+      Reactive Streams API to run on non-blocking servers, such as Netty, Undertow, and Servlet 3.1+ containers
+
+----- 동기 Vs 비동기 in MSA
+      0. Gateway 구현사례 (CORS, TOKEN)
+         - Spring Web     : yongs-gateway 참고
+         - Spring WebFlux : flex-gateway 참고
+
+      1. hystrix 구현방식
+         - Spring Web     : @HystrixCommand(commandKey = "abc", fallbackMethod = "getFallbackMethod")
+         - Spring WebFlux : flex-assist/TechService 소스 참조
+              HystrixCommands.from(response)
+                .fallback(getFallbackMeltod())
+                .commandName("abc")
+                .commandProperties(HystrixCommandProperties.defaultSetter())
+                .toFlux();
+
+      2. Zuul 2.x 부터 Reactive 지원
+         - Zuul 1.x(synchronous)
+           . Servlet 기반
+           . Blocking
+           . multithreaded
+
+         - Zuul 2.x(asynchronous)
+           . Netty 기반
+           . Non-Blocking
+           . Event and Call-back
+
+         - Zuul 1 / Zuul 2 상호 호환성 없음
+
+       3. Spring Cloud Gateway는 Reactive/Netty 기반
+          <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-gateway</artifactId>
+          </dependency>
+
+----- Synchronous Vs. Asynchronous(Reactive)
+      . 동기 :
+        ----------> A() // 5초
+        ----------> B() // 2초
+        ----------> C() // 3초
+        Total(10초)
+        - 장점 : 명시적, 절차적
+        - 단점 : request 증가시 응답시간 증가
+
+      . 비동기 :
+        ----------> A() // 5초
+        ----------> B() // 2초
+        ----------> C() // 3초
+        Total(5초)
+        - 장점 : request 증가에 영향 미비
+        - 단점 : 흐름제어 어려움, 개발이 어려움
+
+----- Synchronous Non-blocking Vs. Asynchronous Non-blocking
+      . Synchronous Non-blocking
+        요청 후 바로 return 하지만(순차적 진행), 요청 종료 여부를 caller가 주기적으로
+        체크(Polling)하는 방식으로 callee가 종료되기 전까지는 종료하지 못함.
+
+      . Asynchronous Non-blocking
+        요청 후 바로 return 하고 종료. 요청 종료 여부를 callee가 callback을 통해서
+        caller에게 알려주는 방식으로 Blocking도 없고 Polling도 없기 때문에 자원 효율적이다.
+
+----- Reactive 선언문
+      . 응답성(responsive) : 신속하고 일관성있는 응답시간 제공
+      . 탄력성(resilient) : 장애상황에도 응답성 유지
+      . 유연성(elastic) : 처리량(request) 변화와 무관하게 응답성 유지(예측가능한 확장 알고리즘)
+      . 메시지 주도(message driven) : 비동기 기반 loosly coupled 아키텍처 구성
+
+----- Reactive 등장배경
+      . 시스템이 분산됨에 따라 API 호출, 데이터 엑세스 등으로 IO 수행시간이 대폭 증가(Web환경)
+      . IO 작업 수행중에는 Thread가 일을 안하고 놀게됨(비효율적 Resource 점유)
+      . 갑자기 처리량이 증가하면 CPU, 메모리는 충분하지만 Thread가 부족하여 처리율 저하
+      . Thread 수를 과도하게 늘리면 CPU, 메모리 부하로 성능 저하
+      . Thread 수를 무조건 늘리는건 해결방법이 아님
+      . 해결방법은 리소스를 얼마나 효율적으로 사용하느냐에 달려 있음
+        - 인프라 관점: CPU/Memory(SPEC설정), Thread를 최적화(튜닝)
+        - 프로그래밍 관점: Reactive Programming(Resource 활용을 극대화)
+
+----- Reactive 프로그래밍이 항상 퍼포먼스가 좋은가 ?
+      I/O JOB(disk, network) 위주의 작업(DB, API 호출)에서는 성능이 향상 될 수 있다.
+      CPU JOB 위주의 작업에서는 성능이 저하될 수 있다.(AI 같은?)
+
+----- reactive-stream 아키텍처 구성시
+      Mono, Flux에 들어있는 data 연산(즉, stream 연산)이 필요할 수 있다.
+
+----- Mono, Flux의 subscribe()의 의미는 ?
+      Mono, Flux의 데이터 처리를 시작한다는 의미. (단, 정상여부는 guarantee 하지 않음)
+      일반적으로 create/delete 행위에서 subscribe는 반드시 호출해야함. retrieve/update는 데이터가 이미 존재하므로 subscribe 대상이 아님. <-- 이 내용은 좀 검증이 필요한 사항임
+      # flex-account에서 AccountService의 create()와
+      # flex-employee에서 EmployeeService의 create()를 비교해 볼것
+      # void를 return 한다는건 처리가 종료(subscribe필요)된 것이고 return 값이 존재한다는 것은 처리가 지속되고 있다는 것.
+
+----- Flux.concat(A, B)
+      서로 다른 A, B Type의 데이터를 함께 가져옴.
+      단, 이럴경우 Synchronous하게 A 완료 후, B를 순차적으로 수행함.
+      (but, Flux.merge()는 비동기적으로 동작)
+
+      https://www.baeldung.com/reactor-combine-streams
+
+----- concat()과 concatWith()은 사용법이 다를뿐 기본적으로 기능이 같음(Synchronous하게 동작)
+      . Flux.concat(flux1, flux2, mono)과 flux1.concatWith(flux2).concatWith(mono)는 동일한 결과가 나옴.
+      . flux1.concat(flux2).concat(mono)는 마지막 mono만 실행됨.
+
+----- mergeWith()는 Asynchronous하게 concatWith()는 Synchronous하게 동작
+      . flux1.mergeWith(flux2).mergeWith(mono)
+      . flux1.concatWith(flux2).concatWith(mono)
+
+----- 시퀀스 합치기
+      . cancatWith() : 단순하게 순서대로 연결
+      예) Flux<Integer> seq1 = Flux.just(1, 2, 3);
+          Flux<Integer> seq2 = Flux.just(4, 5, 6);
+          Flux<Integer> seq3 = Flux.just(7, 8, 9);
+          seq1.concatWith(seq2).concatWith(seq3).subscribe(System.out::println);
+
+      . mergeWith() : 발생순서대로 연결
+      예)                seq1 -----1----------2----------3------------------->
+                         seq2 -----A----B----C----D----E----F----G----------->
+          seq1.mergeWith(seq2)-----1A---B----C2---D----E-3--F----G----------->
+
+      . zipWith() : 순서쌍으로 연결(동일순서/size 데이터 연결할 경우 유용)
+      예)              seq1 -----1---------2-------3---------4--------5------>
+                       seq2 -----A----B----C----D----E----------------------->
+          seq1.zipWith(seq2)-----1A---2B---3C---4D---5E---------------------->
+
+----- Flux, Mono의 sequence 조작은 map()과 flatMap()
+      1. map()     : 동기적, 1-1 변환
+      예) Flux.just(1, 2, 3)
+              .map(i -> i+1)
+      2. flatMap() : 비동기적, 1-N 변환
+      예) Flux.just(1, 2, 3)
+              .flatMap(i -> Flux.range(1, i))
+
+----- Flux, Mono에서 error 발생 시,
+      Exception을 던질 경우 -> doOnError(Exception)
+      fallback을 수행시키고 싶으면 -> onErrorReturn(fallback 값)
+
+      flux.doOnError(e -> System.out.println(e)).subscribe(System.out::println);
+      flux.onErrorReturn("default value : " + 1).subscribe(System.out::println);
+
+----- Flux sorting
+      Flux를 다음과 같이 조작(sorting)하면
+      productFlux.collectSortedList((a, b) -> a.getCode().compareTo(b.getCode()));
+      해당 결과는 Flux가 아닌 Mono가 된다.
+
+----- Paging 구현시 기준
+      1. Non-Blocking(Reactive) Style
+         해당 조건에 맞는 full data를 client에 가져 온 후에
+         화면상에서 paging을 수행한다.
+      2. Blocking Style
+         해당 조건에 맞는 data중 일부 페이지 data를 client에 가져온다.
+         페이지를 클릭할 때 마다 서버에서 data를 retrieve한다.
+
+      단, 조회 결과가 수십만건 이상일 경우
+      ReactiveSortingRepository를 이용해서 페이지별로 stream을 끊어 읽어올 수는 있으나
+      그런 case가 있을지는 모르겠다.
+
+----- Publisher/Subscriber의 데이터 요청 모델
+      Subscription#request()는 Subscriber가 데이터를 처리할 수 있을 때 Publisher에게 데이터를 요청하는 Pull 모델이다. Reactive Pull 모델에 의해 Backpressure(흐름제어)가 가능하다.
+      하지만, Subscription#request(Long.MAX_VALUE)로 요청하면 Publisher는 개수 제한 없이 Subscriber에 데이터를 전송한다. 이는 완전한 Push 모델이다.
+
+----- 콜드 시퀀스 / 핫 시퀀스
+      . Cold Sequence
+        - On demand 서비스와 같은 ?
+        - 구독시점(요청마다)부터 데이터를 생성
+        - API 호출, DB 쿼리, 파일 검색 등
+      . Hot Sequence
+        - Broadcasting 서비스와 같은 ?
+        - 구독여부와 상관없이 데이터 발생
+        - 센서, EVENT 등

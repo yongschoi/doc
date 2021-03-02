@@ -1,0 +1,32 @@
+----- JWT(JSON Web Token)
+      웹표준으로 self-contained 방식으로 정보를 안전하게 전달할 수 있으며, 서버에서 세션관리가 필요없음. -> 세션 관리가 필요 없어서 서버 자원을 효율적으로 활용가능.
+      JWT는 두 개체 사이에서 안정성있게 정보를 교환하기에 좋은 방법이다. 그 이유는, 정보가 sign이 되어있기 때문에 정보 조작 여부 등을 검증할 수 있다.
+
+      JWT = header.payload.signature
+
+      https://jwt.io/
+
+----- claim
+      정보(payload)의 한 조각을 의미하며, 이는 name/value 의 한 쌍으로 이루어 진다.
+
+----- yongs-jwt(인증서버) 설계
+      1. 사용자 login시 yongs-jwt에서 refresh-token과 access-token을 함께 생성함
+         (yongs-user/any/login --> yongs-jwt/jwt/create)
+      2. refresh-token은 yongs-jwt 자체 DB(mongo)에 저장하고 access-token은 localStorage에 저장
+      3. API접근시에는 access-token만 사용함.
+      4. access-token이 만료되면 401 error 발생하고 브라우저의 catchStatus에서 yongs-jwt(port 7071)/jwt/recreate post 호출
+      5. access-token 체크를 API Gateway의 필터 클래스에서 하게되면 사용자 입장에서는 error가 발생하게 되므로, 이를 체감하지 못하도록 화면을 reload해준다. 단, CUD화면(주문)에서는 commit후에 reload를 하게되면 data가 사라지므로 문제가 됨. 따라서, 이런 방식을 보완하기 위해 CUD화면으로 진입하기 전에 의도적으로 aceess-token을 recreate하여 문제 발생 확률을 최소화 한다.
+      6. yongs-jwt의 자체 DB에 있는 refresh-token을 validate 체크 후, 유효하면 access-token을 재발급하고 유효하지 않으면  "REFRESH-TOKEN-NOT-VALID"을 return한다.(vue.catchStatus.js --> yongs-jwt/jwt/recreate)
+      7. 재발급된 access-token을 localStorage로 갱신하고
+      8. 만약 yongs-jwt의 자체 DB에 있는 refresh-token 체크시 invalid하면(이 경우에도 401 error 발생) 세션 종료함.
+      9. 사용자는 다시 로그인 해야함.
+
+----- access token
+      . API 접속용
+      . 보안이 강할수록 유효시간 짧게
+      . API Gateway Filter에서 validate 수행
+
+----- refresh token
+      . access token 재발급용
+      . 로그인 편의성을 높힐수록 유효시간 길게(개인 mobile인 경우  수개월 ??)
+      . 인증서버에서 validate 수행

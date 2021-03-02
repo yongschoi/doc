@@ -1,0 +1,200 @@
+----- NoSQL(Mongo, AWS DynamoDB)
+      Write Heavy한 서비스에 적합한 DB
+      * RDB는 기본적으로 Write는 Master Node 한곳에서만 가능하므로 Write Heavy한 서비스에서 RDB를 사용하면 성능상 이슈가 발생할 수 있다. 그래서 Amazon Aurora(MySQL 및 PostgreSQL 호환 RDB)는 내부적으로 Cloud Storage를 사용하므로 성능향상을 위해 Multi Master 기능을 지원하다.
+
+----- Dialect(방언)
+      JPA에서는 Dialect라는 추상화된 방언 클래스를 제공하여 벤더별로 조금씩 다른 SQL(ANSI가 아닌)에 맞도록 구현체를 제공함.
+      Dialect <--|--- H2Dialect
+                 |--- OracleDialect
+                 |--- MySQLDialect
+
+----- Spring Data Vs Spring Data JPA
+
+      <Spring Data 영역>      Repository
+                                  |
+                            CrudRepository
+                                  |
+                      PagingAndSortingRepository
+                                  |
+      <Spring Data JPA영역>  JpaRepository
+
+----- JPA(Java Persistence API)
+      Java 진영의 ORM 기술 표준으로 spring-boot-starter-data-jpa을 사용하면 ORM(spring boot에서는 JPA default 구현체로 Hibernate 적용)을 사용한다는 의미
+
+----- Object 관계설정 저장메커니즘(1)
+      class A() {
+        B b;
+      }
+
+      class B() {}
+
+      1. 개발자 coding (Mybatis+SQL)
+      A를 save하면 개발자가 A, B테이블을 각각 insert한다.
+      2. ORM (Hibernate)
+      만약 One To Many / Many To One 설정이 되어있다면, A를 save하면 ORM이 A, B테이블을 각각 insert한다.
+
+----- Object 관계설정 저장메커니즘(2)
+      class A() {
+        B b;
+        C c;
+      }
+
+      class B() {}
+      class C() {}
+
+      1. 개발자 coding
+      A를 save하면 개발자가 A, B, C 테이블을 각각 insert한다.
+      2. ORM
+      가장 활용도가 높은 관계(A-B 혹은 A-C)만 @OneToMany 설정한다. @ManyToOne은 모두 설정하여 메인 관계만 @OneToMany로 작동하고 나머지는 일반 속성으로 작동한다. 이렇게 설정하면 저장할 때 속성은 별도로 set해야 한다.
+
+----- Object 관계설정 조회 매커니즘
+      1. 개발자 coding (Mybatis+SQL)
+      A a = findByXXX하면 개발자가 A, B, C 모든 테이블을 각각 select해야 한다.
+
+      2. ORM (Hibernate)
+      A a = findByXXX하면 ORM이 A, B, C 모든 테이블을 각각 select해준다.(단, 관계설정을 한 경우)
+      * ORM 매커니즘을 완벽(?)하게 이해해야 한다. 안그럼 망한다. 성능상 저하를 초래할 수 있다.
+
+----- fetch=FetchType
+      @OneToMany(fetch=FetchType.EAGER)는 참조하는 모든 Table을 조회하므로 OneToMany에서는 상황에 따라 쓸데없는(?) Query로 DB성능을 저하시킬 수 있다. 따라서 default는
+      . @OneToMany: (fetch=FetchType.LAZY)
+      . @ManyToOne: (fetch=FetchType.EAGER)
+      * 실행 메소드에 @Transactional을 설정하면 EAGER 효과를 낼 수 있다.
+      * OneToMany에서 기본 Join은 Inner Join
+
+----- Lazy Load
+      성능측면에서 fetch=FetchType.LAZY로 설정하고, Lazy Load로 참조 객체값을 채워주기 위해서는 @Transactional + log.info("touch code >>> " +  member.getChildList()); 로 터치(?) 코딩을 추가해야 한다.
+
+      * @OneToMany/ManyToOne으로 관계설정 시 메커니즘 이해, Lazy Load 등을 고려하면 관계설정 하지말고 명시적으로 조회하는것이 바람직하다
+
+----- 단기속성 ORM 요약
+      관계설정 없이 저장은 JPA, 조회는 QueryDSL:
+
+----- 영속성 컨텍스트(PersistenceContext)
+      . Entity를 영구 저장하는 환경
+      . @Transient는 DB column과 매핑되지 않는 temp성 attribute를 정의
+      . JPA Entity와 DTO(Join성 Object인 경우)를 구별할 필요가 있음
+
+      <단계>
+      new Object(1) ---> PersistenceContext(2) ---> DB(3)
+
+      (1) 비영속(new/transient) : PersistenceContext와 무관
+      Member member = new Member();
+      member.setId(1);
+
+      (2) 영속(managed) : PersistenceContext에 저장되고 관리되는 상태
+      EntityManager em = factory.createEntityManager();
+      em.getTransaction().begin();
+      ...
+      em.persist(member)
+
+      (3) commit : PersistenceContext에서 DB로 flush()
+      getTransaction().commit();
+
+----- JPQL(Java Persistence Query Language)
+      SQL과 비슷한 문법을 가진 객체 지향 쿼리로 JPA에서 제공하는 메서드의 한계(?)를 채울수 있다(조회성 쿼리)
+      예) String jpql = "select c from Category c";
+      특징1. 엔티티와 속성은 대소문자를 구분
+      특징2. Category는 Entity 클래스이름이 아닌 엔티티 이름 @Entity( name="Category" )
+      특징3. Category c와 같이 c라는 별칭 필수
+
+----- Join
+      . innerJoin(A.ref, B) : A, B 교집합
+      . leftJoin(A.ref, B): A는 모두 포함하는 교집합
+      . rightJoin(A.ref, B): B는 모두 포함하는 교집합
+
+----- QueryDSL
+      SQL과 같은 쿼리를 생성할 수 있도록 하는 객체 지향적 조회 프레임워크
+      단순 문자열(JDBC, Mybatis, JPQL)로 쿼리를 생성(Type-check가 불가능)하는 것이 아니라 Fluent API(QueryDSL)로 쿼리를 생성하므로 타입 안정성 등 여러 장점이 있다. ex) query.from().where()
+
+      . Projections
+        Entity 전체를 가져오지 않고 원하는 컬럼값만 조회
+
+      . 페이징 API
+        JPAFactoryQuery query = new JPAQueryFactory(em);
+        QMember m = QMember.member;
+        List<Member> list = query.selectFrom(m)
+          .where(m.age.gt(18))
+          .orderBy(m.name.desc())
+          .limit(10)                  // 페이징을 위해 limit, offset도 그냥 넣어줄 수 있다.
+          .offset(10)
+          .fetch();
+
+----- Gradle 5.0 이상 & IntelliJ 2020.x 사용
+      com.ewerk.gradle.plugins.querydsl 플러그인 사용하지 않습니다.
+      build.gradle 예제:
+
+      dependencies {
+        compile("com.querydsl:querydsl-core") // querydsl
+        compile("com.querydsl:querydsl-jpa") // querydsl
+        annotationProcessor("com.querydsl:querydsl-apt:4.3.1:jpa") // querydsl JPAAnnotationProcessor 사용 지정
+        annotationProcessor("jakarta.persistence:jakarta.persistence-api")
+        annotationProcessor("jakarta.annotation:jakarta.annotation-api")
+      }
+
+      def generated='src/main/generated'
+      sourceSets {
+        main.java.srcDirs += [ generated ]
+      }
+
+      tasks.withType(JavaCompile) {
+        options.annotationProcessorGeneratedSourcesDirectory = file(generated)
+      }
+
+      clean.doLast {
+        file(generated).deleteDir()
+      }
+
+      * eclipse에서는 compile 후에 generated 폴더를 Java Build Path > Source 탭에 추가해야 Q클래스 인식
+
+----- 결과 반환
+      . fetch : 조회 대상이 여러건일 경우. 컬렉션 반환(전체 건수가 아닌 해당 조건에 맞는 건수만)
+      . fetchOne : 조회 대상이 1건일 경우(1건 이상일 경우 에러). generic에 지정한 타입으로 반환
+      . fetchFirst : 조회 대상이 1건이든 1건 이상이든 무조건 1건만 반환. 내부에 보면 return limit(1).fetchOne() 으로 되어있음
+      . fetchCount : 개수 조회. long 타입 반환
+      . fetchResults : 조회한 리스트 + 전체 개수를 포함한 QueryResults 반환. count 쿼리가 추가로 실행된다.(페이징)
+
+----- 커버링 인덱스
+      페이징에서(인덱스를 탔음에도 느린 쿼리의 경우 이 select절 항목 때문)
+      select * 로 조회하면 대상건수를 찾을때까지 데이터블록으로 접근하지만
+      select id 로 조회하면 인덱스 검색으로 걸러내고 대상건수만 데이터블록으로 접근
+
+      SELECT  id, name, stock, category, in_date, ... // name 이하는 인덱스에 포함되지 않기 때문에 커버링 인덱스가 안됨
+      FROM  items as i
+        JOIN (SELECT id   // 인덱스에 포함된 id만 조회하므로 커버링 인덱스 적용
+          FROM items
+          WHERE 조건문
+          ORDER BY id DESC
+          OFFSET 페이지번호
+          LIMIT 페이지사이즈) as temp on temp.id = i.id
+
+----- 페이징
+      1. Offset 방식(내부적으로 항상 첫페이지부터 읽음)
+         앞에서 읽었던 행을 다시 읽어야 하므로 뒤로 갈수록 쓸데없이(?) 읽기만 하는 건수가 많아져서 점점 느리게 된다.
+
+         SELECT *
+         FROM items
+         WHERE 조건문
+         ORDER BY id DESC
+         OFFSET 페이지번호
+         LIMIT 페이지사이즈
+
+      2. No Offset 방식(대상 페이지만 읽음)
+         조회 시작 부분을 인덱스로 빠르게 찾아 매번 첫 페이지만 읽도록 하는 방식
+
+         SELECT *
+         FROM items
+         WHERE 조건문
+         AND id < 마지막조회 id
+         ORDER BY id DESC
+         LIMIT 페이지사이즈
+
+----- MyBatis의 ResultMap 객체생성방법
+      1. ResultMap의 Vo의 기본생성자(@NoArgsConstructor)를 이용해 생성
+      2. 기본생성자(@NoArgsConstructor)가 없는경우 ResultMap에 정의된 생성자를 찾아 생성
+
+      만약 2번과정에서 arguments 값중 null이 있으면 error발생하므로 기본적으로 @NoArgsConstructor를 설정하는것이 좋다
+
+----- PageHelper
+      1. Page<BookStock>에는 순수 data만 있다.
+      2. PageInfo<BookStock>에는 data + page meta info가 함께 있다.

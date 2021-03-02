@@ -1,0 +1,109 @@
+----- XML문서에 encoding 명시
+      파싱을 해야하는 문서형식(xml, html등)은 encoding을 명시함. 일반 text파일은 파싱을 하지 않으므로 encoding 명시 필요없음
+
+----- L4 로드밸런스 알고리즘
+      . Hasing : 최초 접속한 서버로 계속 접속
+      . Round-Robin : 한번씩
+      . Weighted Round-Robin : 가중치 고려하여 한번씩
+      . Least Connection : 연결수 적은쪽으로
+      . Weighted Least Connection : 가중치 고려하여 연결수 적은쪽으로
+
+----- 네트워크 로드밸런서 종류
+      . L2(Data Link Layer) : Mac
+      . L3(Network Layer) : IP
+      . L4(Transport Layer) : IP + Port
+      . L7(Application Layer) : IP + Port + 패킷 내용
+
+----- Edge Computing
+      각 local 컴퓨터에서 처리가능한 데이터는 중앙(Cloud 와 같은)서버로 전송하지 않고 local에서 처리함으로써 traffic 절감 효과를 가져올 수 있음.
+      예를 들면, CCTV의 모든 스트림을 중앙으로 전송하지 않고 움직임이 있는 스트림 데이터만 필터링하여 중앙으로 전송한다.
+      그외 자율주행 자동차 등에서 많이 활용되고 있음.
+      대신 이러한 필터기능이 local에서 수행될 수 있는 Software가 많이 필요할 수 있음.
+
+----- 카날리 테스트
+      버전별 배포 전략으로 전체 트랜잭션의 95%를 기존 버전 API에
+                                         5%를 신규 버전 API에 보냄.
+      해당 테스트를 수행하려면 트래픽 제어 모듈이 있어야 가능함.(Istio 등)
+
+----- Zero Trust 모델(보안)
+      . 불신을 원칙으로 접속 가능한 모든 사용자(네트워크 내/외부)에 대한 신원 및 권한설정
+      . 모든 트래픽을 검사 및 로깅
+
+----- HA(High Availability): 고가용성
+      1. Clustering : 멀티 Node를 하나의 시스템 인것 처럼 운영
+      2. 이중화 : 서버 2개(HOT:Active-Active, COLD:Active-Standby)
+      3. RAID : 저장 장치 이중화
+         . RAID 0(Striping) : Disk 여러개를 묶어서 하나처럼 사용
+         . RAID 1(미러링) : 복제본을 만든다. 장애 대비용
+         . RAID 5(Striping+Parity) : RAID 0 로 데이터 분산하고 복구용 정보를 별도 보관
+
+----- Don't get complacent
+      Technology moves quicker than people
+
+----- Data Driven Culture
+      아마존 개발문화-COE(Correction of Error), PR(Press Release)FAQ-로 데이터(Document)를 의사결정 수단으로 포용하고 회사의 전략적 자산으로 취급. 높은 수준의 데이터 활용 능력과 데이터가 모든 사람의 성과를 향상시키는 데 도움이된다는 믿음을 가진 문화.
+
+      - 아마존 스터디 자료
+      1) Amazon Builders Library
+         https://aws.amazon.com/ko/builders-library/?cards-body.sort-by=item.additionalFields.customSort&cards-body.sort-order=asc
+      2) AWS Well-architect
+         https://aws.amazon.com/ko/architecture/well-architected/?wa-lens-whitepapers.sort-by=item.additionalFields.sortDate&wa-lens-whitepapers.sort-order=desc
+
+----- Storage
+      1) File Storage   : Data가 증가할 수록 성능 저하.
+      2) Block Storage  : 저장공간 미리확보. Database에 적합.
+      3) Object Storage : RESTFul Protocol(HTTP)로 get/post. 수정은 불가.
+
+----- Minio
+      오픈소스(Apache License v2.0) Object Storage 제품
+      파일을 올리려면 반드시 bucket(폴더개념)을 생성해야 함.
+
+----- minio 이미지 업로드 메커니즘
+      . putObject API를 이용하여 이미지 upload 할 경우
+        Object Name으로 저장되나(abc@company.com)
+      . Web에서 이미지를 올리면
+        Object Name을 셋팅할 방법이 없어 파일명이 Object Name으로 저장된다. but, 파일확장명도 함께 저장되므로 getObjectUrl에서 유의해야 한다.(abc@company.com.jpg)
+
+----- yongs-user/flex-product 이미지 아키텍처
+      . yongs-user/yongs-product는 back-end에서 Minio Java API로 image url를 셋팅한다.
+      . flex-product는 front-end에서 Minio Javascript API로 image url를 셋팅한다.
+        * Minio Javascript API는 callback 함수로 제공하므로 image loadking 이슈가 존재함 -> ProductControl.vue 참고
+
+----- Serveless Lamda 에 적합한 서비스 유형
+      1. 비정기적으로 대량 traffic처리가 필요한 서비스
+         . promotion
+         . 이미지 대량 업로드(신규 상품 등록)
+         . 최근 본 상품 목록
+      --> 이벤트성으로 순간적인 대용량 데이터를 처리할 경우 처리 가능한 많은 서버 수를 확보해야 하기때문 Serveless Lamda를 활용하면 비용측면에서 유리하다.
+      2. 변경사항이 많은 서비스(다양한 이벤트성 서비스)
+      3. 대량 데이터(로그)을 추출해서 포맷변경 시
+
+      * Serveless는 내부적으로 Micro VM(container 아님)으로 처리하므로 최초 실행시 VM이 기동되야 하므로 cold start issue가 발생함.(경량 VM이지만 지연시간 발생) work around로 가끔씩(?) ping을 호출해서 성능이슈를 최소화 할 수 있음.
+
+----- Annotation Processor
+      . java 컴파일러의 플러그인
+      . 코드 단순화
+      . 모든 처리가 Runtime이 아닌 Compile time에 발생하므로 빠르다
+      . 값비싼 리플렉션을 사용하지 않는다.
+      . Boilerplate code(반복적이고 지루한 코드) 지양
+
+----- SPOF
+      단일 고장 점(single point of failure, SPOF)는 시스템 구성 요소 중에서 동작하지 않으면 전체 시스템이 중단되는 요소를 말함.
+
+----- Filter Vs. Interceptor
+      <Filter>
+      DispatcherServlet 앞단에서 정보 처리
+      J2EE 표준스펙에 정의되어 있는 기능
+      -> 인코딩 변환 처리, XSS 방어 처리
+
+      <Interceptor>
+      Controller 앞단에서 정보 처리
+      SpringFramework에서 자체적으로 제공하는 기능
+      -> 사용자 인증, 권한체크
+
+                  --------------------- Spring Context -----------------------
+      (Filter) -> | Servlet -> (Interceptor) -> Cotroller -> (AOP) -> Service
+                  ------------------------------------------------------------
+
+----- 멀티테넌시(Multitenancy)
+      동일한 서비스를 독립적으로 이용가능한 아키텍처(ex 이메일 서비스)

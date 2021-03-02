@@ -1,0 +1,51 @@
+----- vuetify에 Font Awesome 5 Icons 적용하기
+      npm install @fortawesome/fontawesome-free -D
+
+      // src/plugins/vuetify.js 에서
+      import '@fortawesome/fontawesome-free/css/all.css' // Ensure you are using css-loader
+      import Vue from 'vue'
+      import Vuetify from 'vuetify/lib'
+
+      Vue.use(Vuetify)
+
+      export default new Vuetify({
+        icons: {
+          iconfont: 'fa',
+        },
+      })
+
+----- vuetify에서 :class에서 자기 자신은 적용되지 않음
+      --> 기본 theme와 충돌로 background-color가 안먹음.
+      예)
+      <v-card
+        class='pa-2'
+        :class="{'complete': item.complete === true}"
+      >
+      <p>{{ item.name }}</p> 에서
+
+      <style>
+        .complete 속성은 동작하지 않음(bug 추정)
+        .complete p 속성은 동작함
+
+----- vuetify 업그레이드
+      npm install --save vuetify@1.0.0-beta.6
+
+----- 반응형 웹 Viewport Breakpoints(기본 12단)
+      xs: Extra small
+      sm: Small
+      md: Medium
+      lg: Large
+      xl: Extra large
+
+      예) xs12 -> Extra small 12단
+          sm4 -> Small 4단
+
+----- 12단 Gird 시스템
+      <v-container>
+        <v-layout>
+          <v-flex>
+          </v-flex>
+          <v-flex>
+          </v-flex>
+        </v-layout>
+      </v-container>

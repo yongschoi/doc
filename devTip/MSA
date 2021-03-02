@@ -1,0 +1,136 @@
+----- SOA(Service Oriented Architecture) 실패
+      1. 조직변화 수용의 실패
+         콘웨이의 법칙(Conway's law) : 모든 시스템은 그 조직의 의사소통 구조와 동일하게 만들어진다.
+         SOA시대에는 조직의 변화는 전혀 고려하지 않았다.
+         -> 시스템적으로 MSA적용을 위해서는 조직적으로 devOps 적용이 필요하다
+      2. ESB의 부하 중앙 집중 문제
+         기술적 문제
+         -> 비즈니스 로직이 단일 서비스 도메인내에 존재하는 MSA와 달리 SOA는 도메인 전반에 존재. 즉 일종에 비즈니스 규약(제품코드 ?)의 적용범위가 크면 관리가 어려워진다.
+
+----- 서비스::: Software 구성 요소(Component)
+      독립적으로 대체하거나 업그레이드 가능한 소프트웨어 단위
+      * library는 프로그램에 링크되어 메모리 내 함수 호출을 사용하는 구성요소로 library 변경은 전체 프로그램을 재배포 해야하므로 서비스와는 구별됨.
+
+----- MSA에서 서비스의 정의
+      서비스는 독립적으로 배포 가능하고 확장 가능하며, 그것을 만든팀이 직접 관리할 수 있어야 한다.
+      * DDD(Domain Driven Design) 활용
+        . Event Storming
+        . Boris Diagram
+        . Snap-E
+
+----- MSA란?
+      . Service Oriented : API기반
+      . Loosely Coupled  : <기술적 관점> 독립적으로 업데이트 및 배포 가능
+      . Boundary Context : <비즈니스적 관점> 다른 서비스의 내부구조를 몰라도 내 서비스를 업데이트 할 수 있다
+
+----- 명시적인 인터페이스 정의
+      서비스 간 종속과 결합(tightly coupled)을 방지한다.
+      * 이슈 : 원격 API는 비용이 높기 때문에 각 구성 요소를 크게 나누는(coarse-grained) 경향이 발생할 수 있다. fine-grained 하게 인터페이스를 정의하면 그만큼 값비싼 원격 API 호출이 많아 지기 때문이다. 인터페이스 구체화에 따른 서비스의 완성도와 해당 서비스와의 통신비용과의 trade-off가 발생할 수 있다.
+      . coarse-grained: [A] ---> [B].initialize()
+
+      . fine-grained:   [A] ---> [B].tableClean()
+                        [A] ---> [B].dataGenerate()
+                        [A] ---> [B].dataInsert()
+
+----- API 캐싱
+      자주 사용되는 자원은 캐싱할 수 있다.
+
+----- You build, You run it
+      서비스 개발에서 운영까지 전체 life-cycle을 책임진다. 이것은 기본적으로 사용자의 비지니스를 향상시킨다는 철학에 기반한다.(서비스 개발자와 사용자 사이의 밀접한 피드백 등)
+
+----- 레거시 서비스를 정의할 경우 참고사항
+      거의 변경되지 않는 시스템 부분과 현재 변경을 많이 하고 있는 부분과는 다른 서비스로 해야 합니다. 만약 두 서비스를 동시에 변경할 경우가 여러번 있으면, 그 서비스들은 합쳐져야 합니다.
+
+----- MSA 아키텍처 설계
+      1. Inner Architecture
+         . 서비스 정의: 비즈니스 사이즈, 종속성 등
+         . 분산 데이터 관리: 데이터 정합성 관리
+         . API 정의:
+
+      2. Outer Architecture
+         . External Gateway
+         . Service Mesh
+         . Container Management
+         . Backing Services
+         . Telemetry
+         . CI/CD Automation
+
+----- Eureka
+      Netflix사에서 개발한 Service Discovery & Registry 솔루션
+
+      * SpringBoot에서 random port로 설정하면(server.port = 0) Eureka 인스턴스가 1개 이상 등록이 안됨.(bug 추정)
+      이 이슈는 eureka가 server.port를 할당 받은후에 등록하지 않고 설정값(0)을 기준으로 등록하므로 중복등록이 되지 않는다.
+      eureka serviceId : ${spring.application.name}:${server.port}
+
+      해결책은 server.port와 별도로 eureka.instance.instanceId 을 구분해서 등록하면 가능하다.
+      server:
+        port: 0
+
+      eureka:
+        instance:
+          preferIpAddress: true
+          hostname: localhost
+          instanceId: ${spring.application.name}:${random.value}
+
+----- Consul (https://www.consul.io/)
+      Hashicorp사에서 개발한 Service Mesh 구현체(Eureka와 유사한 기능)
+
+----- Spring Cloud Netflix(Greenwich.SR2) Architecture
+      . Zuul : API Gateway
+        * timeout 관련 설정은 hystrix와 ribbon의 설정을 같이 해야함
+      . Eureka : Service Discovery & Registry
+      . Hystrix : Circuit Breaker
+        * hystrix 모니터링 대상이 되는 Application에 spring-cloud-starter-netflix-hystrix 를 설정하고, hystrix를 통합해서 보여주는 서버에 spring-cloud-starter-netflix-hystrix-dashboard 설정
+      . Ribbon : Client Side Loadbalancer
+
+----- Hystrix 기준
+      Hystrix기능은 장애 전파 방지가 최우선 목적이 되어야 한다.
+      따라서 Hystrix 대상이 된 시스템을 얼마나 빨리 isolation 시킬것인가 ? 즉 timeout 설정이 key가 된다.
+      Spring Cloud Gateway기준 1000ms 가 기본이다.
+      Hystrix 대상이 된 시스템은 정상적인 처리를 못할뿐 status OK로 처리하면,(예를 들면, 임시데이터 display등) 결과적으로는 사용자를 속여 시스템 상황이 악화되는 것을 막는 효과도 있다.
+      그러나 status Error로 처리하면(HttpStatus 코드값에 따라) 사용자에게 메시지를 보여준다.
+      단, front에서 HttpStatus 코드에 따라 로직이 달라진다는 것을 인지할 필요가 있다.
+
+      # Hystrix에 대한 고민
+
+      # Hystrix 범위에 대한 설계가 필요함.
+      # 아래처럼 서브시스템 전체(/todo/**)에 Hystrix를 설정하는것은
+      # 서브시스템 장에에 해당하므로 구체적인 fallback을 정의하는 것은 어려움.
+      # 만약, 구체적인 fallback을 정의하려면
+      # /todo/**가 아닌 /todo/all, /todo/id/{id} 등 각각에 대한 정의가 필요함
+      # 그러나 이런 범위를 Gateway에서 하는것이 맞는지는 의문스러움.(소규모 시스템은 가능할 것 같음)
+      # 따라서 Gateway에서의 Hystrix는 시스템 장애 수준으로 정의하고
+      # 각각의 구체적인 fallback을 위한 Subsystem이 필요할 것으로 보임.
+      # 아니면 Mock시스템을 별도로 구성하는 것은 어떨까 ??
+      # - id: flex-todo-all
+      #  uri: lb://flex-todo
+      #  predicates:
+      #  - Path=/todoall
+      #  filters:
+      #  - name: Hystrix
+      #    args:
+      #     name: todoallcmd
+      #      fallbackUri: forward:/fallback/todoall
+
+      # Vue, Ajax와 같은 SPA에서는 서버를 비동기적으로 호출하므로 Hystrix의 forward 기능이 정상적으로 동작하지 않음. Hystrix는 request url에 문제가 생기면 forword url을 response하므로 SPA 프로그램에서는 504(Gateway Timeout) error가 발생함.(이건 좀 더 확인할 필요가 있음. headers설정이 안되있어서 정상적으로 동작하지 않았던것으로 추정됨. flex-gateway 최종버전은 정상적으로 동작함.)
+
+----- API Gateway VS. Service Mesh
+      circuit breaker와 같은 일부 동일한 기능을 가지고 있지만,
+      . API Gateway: 비지니스 API 정의(API Gateway -> Service Mesh -> Microservice)
+      . Service Mesh: 서비스 메시는 비즈니스 개념이 없는 서비스 간 통신 인프라 일뿐이다. 서비스 메시는 Gateway와 달리 마이크로서비스별로 하나씩 proxy형태로 존재한다.
+
+----- 통합 DB(Repoerting)에 대한 고민
+      서비스별로 DB가 존재하다보니 통합 Reporting을 위한 data를 어떻게 생성할까에 대한 고민이 필요함.
+
+----- MSA ::: data 중복을 얼마나 허용할 것인가?
+      RDB는 기본적으로 data 중복을 허용하지 않으므로 read시 다양한 join이 필요하다.
+      MSA의 철학은 polyglot이 가능할 만큼 서로 독립적인 서비스들의 결합이다.
+      따라서 MSA는 어느정도 data 중복을 허용하는 것이 기본 철학에 더 맞다고 생각한다.
+      그래야만 read시에도 거의 join없이(가능한 모든 data를 가지고 있어야 함) 독립적인 서비스가 가능할 것이다.
+
+      단, data 중복을 허용한다는 것은 다음과 같은 치명적인(?) 고려사항이 있다.
+      <data 일관성 유지방안>
+      1. data 일관성 유지는 어느정도 포기
+         history성 data는 일관성을 굳이 유지할 필요가 있을까 싶다.
+      2. data 일관성 반드시 유지
+         2PC commit이 가능해야 한다. 2PC commit은 SAGA패턴(event driven)을 적용하여 어느정도 대응이 가능하나 모든 메소드에 대한 rollback 로직이 구현되어야 하며, 100% data 일관성을 유지 하지는 못한다

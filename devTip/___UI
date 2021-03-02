@@ -1,0 +1,8 @@
+----- Flexbox Layout Vs. Grid Layout
+      Flexbox는 Application의 구성요소 혹은 소규모 layout에 적합하고
+      Grid는 대규모 layout에 적합
+
+----- flex-wrap
+      nowrap(default): all flex items will be on one line
+      wrap: 위에서 아래로 여러줄에 걸쳐 배치
+      wrap-reverse: 아래에서 위로 여러줄에 걸처 배치

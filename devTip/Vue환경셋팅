@@ -1,0 +1,51 @@
+----- Vue 프로젝트 개발환경을 위한 NPM 환경구성
+      Node js를 설치하면 npm이 설치됨
+
+----- Vue-CLI 3 설치
+      npm install -g @vue/cli
+      npm install -g @vue/cli-init
+
+----- npm모듈 업그레이드
+      npm i 모듈@버전 --> 예) npm i minimist@1.2.3
+
+----- Vue 프로젝트 개발환경 만들기(vue-cli3 이용)
+      # vue create my-project
+
+----- vuetify 설치
+      # vue add vuetify
+
+----- vue-router 설치
+      # npm install --save vue-router
+
+----- axios 설치
+      # npm install --save axios
+
+----- minio 설치
+      # npm install --save minio
+      
+----- Vue 개발환경 시작 및 build
+      해당 프로젝트 폴더에서
+      npm run serve (로컬서버구동)
+      npm run build (Production 빌드)
+
+----- Dockerize
+      https://vuejs.org/v2/cookbook/dockerize-vuejs-app.html
+
+----- BootstrapVue 시작하기
+      vue 프로젝트 폴더에서
+      > npm install vue bootstrap-vue bootstrap
+
+      main.js에 import문 추가
+      import Vue from 'vue'
+      import BootstrapVue from 'bootstrap-vue'
+
+      Vue.use(BootstrapVue)
+
+      import 'bootstrap/dist/css/bootstrap.css'
+      import 'bootstrap-vue/dist/bootstrap-vue.css'
+
+      https://bootstrap-vue.js.org/docs 참조
+
+----- vue router mode
+      1. hash(#) 모드 (default)
+      2. history 모드

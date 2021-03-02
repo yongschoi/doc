@@ -1,0 +1,61 @@
+----- SAGA
+      . 주문-재고-결제-배달과 같이 여러서비스에 걸친 data consistency 유지방안
+
+----- CQRS(Command Query Responsibility Segregation)
+      . CUD/R 분리
+
+----- Transactional Outbox
+      . Reliably send and receive messages
+      . message relay 구현방안
+        . Transaction log tailing
+        . Polling publisher : 중복메시지 방지 방안 필요(멱등성 Consumer 구현)
+
+----- Event Sourcing
+      . Reliably send and receive messages
+      . 데이터 상태 변화에 따라 event 발생
+         id   |  status | total
+        ------------------------
+        1234  | created |   10
+                approved
+                shipped
+      . DB의 데이터 상태로 event가 발생하므로 tx 유지
+
+----- Outbox Table
+      예1)
+      ---------------------------------------------------------------------------
+         id(UUID)    | aggregate      | operation | message
+      ---------------------------------------------------------------------------
+      f2df-ssff-98f..| Book(테이블명?) | CREATE    | {"id":1,"title":"Spring..."}
+
+      예2)
+      . id             : bigint   / PK(AutoIncrement)     / 1000
+      . aggregate_id   : varchar  / consumer group id     / orderGroup
+      . aggregate_type : varchar  / table name            / order
+      . payload        : text     / JSON                  / {"id":1,"title":"Spring..."}
+      . event_type     : varchar  / insert,update,delete  / insert
+      . create_at      : datetime / 이벤트 발생시간        / 2020-12-11 23:33:32.93938
+
+----- Debezium(Outbox 솔루션)
+      . 구조 : Mysql - <Mysql Connector> - <Kafka Connect> - Kafak
+      . Mysql의 binlog를 모니터링 하여 해당 log를 Kafka로 메시징
+      . 비동기 database 동기화 솔루션
+      . https://debezium.io/
+
+----- Outbox Table(중복방지 예)
+      ---------------------------------------------------------------------------
+      id | topic          | message                             | status | time
+      ---------------------------------------------------------------------------
+      1  | product_create | {"id":1,"title":"Spring..."}        | CLOSED |
+      2  | product_update | {"id":1,"title":"Summer..."}        | OPEN   |
+      3  | order_create   | {"id":order_233,"no":3, "price":..} | OPEN   |
+
+      * process
+        1. 최초 OUTBOX insert    (OPEN)
+        2. select *              (OPEN)
+        3. to message broker     (OPEN)
+        4. update                (CLOSE)
+        5. delete where status='CLOSE'
+
+      * CLOSE 1단계 방식은 중복 가능성 high
+      * OPEN/CLOSE 2단계 방식으로 중복 가능성 low
+      * 긍극적으로 멱등성 Consumer를 설계해야 중복 가능성 zero

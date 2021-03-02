@@ -1,0 +1,49 @@
+----- DB Mock DbUnit
+      대부분의 DB Mock 방식은 기존 database가 아닌 data에 focus가 되어 있다.
+      즉, DB에 data를 temp성으로 주입하고 rollback(?)하는 방식으로 DB Mock을 구현한다.
+
+----- Gradle test
+      application.yml에서 jdbc-url은 docker 컨테이너로 실행되므로 maria-db로 정의하지만,
+      gradle test를 docker 컨테이너에서 수행하면 maria-db로 정의하고
+      컨테이너가 아닌 일반 node에서 수행할 경우에는 maria-db를 인식못하므로 db ip로 명시해야한다.
+
+----- Test 환경구성하기
+      기본적으로 Test 주체가 IDE인지 Build Tool(Gradle)인지 확인이 필요함.
+      IDE(Eclipse, Intellij)에서 문제가 없는 Test가 CI에서 error가 발생할 경우 build 도구의 Test환경을 확인한다. 보통 CI에서 Test는 maven혹은 gradle이 수행하므로 ...
+      이왕이면 로컬 build환경과 서버 build환경을 동일하게 하는것이 좋다.
+
+      <참고사항>
+      . Intellij에서는 test환경이 프로젝트 빌드환경과 동일하게 구성된다.
+      . eclipse에서는 eclipse test와 gradle test가 별도의 메뉴로 제공된다.
+
+      >> gradle test의 경우 (gradle 6.7 기준)
+      1. JUnit4으로 코딩
+         org.junit.jupiter.api.Test의 @Test는 인식이 안됨
+         org.junit.Test import
+      2. Test 클래스 Test 메소드 모두 public으로 설정
+         public이 아니면 test 대상이 안됨
+
+----- gradle TEST 설정
+      gradle only Test는 debug용으로는 부적합하므로
+      . local환경에서는 useJUnitPlatform()으로 수행하고
+      . server환경에서는 test time이점이 있을 수 있다.
+
+      * SpringBoot에서 default로 build.gradle에 JUnitPlatform()을 이용하는 설정
+        test {
+          useJUnitPlatform()
+        }
+
+----- SpringBoot Test 어노테이션
+      > @SpringBootTest : 통합 테스트 => 전체 Bean(모든 빈을 등록시켜서 테스트하기 때문에 무겁다)
+      > @WebMvcTest : 단위 테스트 => MVC 테스트
+      > @DataJpaTest : 단위 테스트 => JPA 테스트
+      > @RestClientTest : 단위 테스트 => Rest API 테스트
+      > @JsonTest : 단위 테스트 => Json 테스트
+
+----- Sping Cloud 환경
+      JUnit테스트 환경에서 Zipkin과 같은 Spring Cloud 검증이 불가함.
+
+----- TDD 장점
+      1. 구현코드 검증(간편한 테스트 수행)
+      2. 코드 변경시 기 구현된 코드 검증
+      3. 테스트 자동화

@@ -1,0 +1,55 @@
+----- Spring Boot의 탄생
+      한마디로 요약하면 Spring의 단점(?)을 극복한 결과물?
+      Spring이 있었기에 Spring Boot가 존재하게 됨(Spring Boot thanks to Spring)
+
+      1) Auto Configuration
+         . @SpringBootApplication: 스프링기능 자동설정
+         . spring-boot-starter-xxx: 관련모듈 의존성 자동화
+      2) Easy dependency Management
+         . spring-boot-starter-xxx: 관련모듈 의존성 버전관리
+         . io.spring.dependency-management: 모듈간 버전관리
+      3) Embedded Servlet Container Support
+         . Not War, Just Jar: 실행환경에 대한 고민 제거
+
+      * 대규모 트래픽에서 버틸 수 있는가?
+      * 내가 모르는 설정이 되어 있는 것 아닌가?
+      --> 배민서비스(하루 2천만 이상의 PV-Page View), Netflix에서도 SpringBoot 사용
+
+----- SpringBoot2에서 Jedis(for Redis) 사용시 추가 dependency
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-redis</artifactId>
+      </dependency>
+      <!-- jedis-2.4.1로 업그레이드 되면서 commons-pool2 dependency 추가가 반드시 필요함 -->
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-pool2</artifactId>
+      </dependency>
+
+----- hystrix timeout과 ribbon의 ReadTimeout 설정
+      hystrix timeout >= ribbon의 ReadTimeout
+      hystrix.command.default.execution.isolation.thread.timeoutInMilliseconds: 30000
+      ribbon:
+        eureka:
+          enabled: true
+          ConnectTimeout: 3000
+          ReadTimeout: 30000
+
+----- Spring Boot compatibility with Spring Cloud
+      Cloud       SpringBoot
+      ------------------
+      Hoxton      2.2.x
+      Greenwich   2.1.x
+      Finchley    2.0.x
+      Edgware     1.5.x
+      Dalston     1.5.x
+
+----- rest API 에러 컨트롤(내용이 좀 이상함. 확인 필요)
+      Caller --> Callee로 rest 호출 시 Callee에서 HttpStatus를 어떻게 셋팅하느냐에 따라 Caller에 영향이 있음.
+      Callee에서 HttpStatus.OK 이면 Caller입장에서는 정상처리가 되지만
+      Callee에서 HttpStatus.UNAUTHORIZED 와 같이 error code를 셋팅하면 Caller입장에서는 500 error가 발생함. 따라서 비즈니스적으로 오류를 control하려면 Callee에서는 대부분 HttpStatus.OK 셋팅해야 함.
+
+----- spring-boot-starter 라이브러리(example-start 참조)
+      . artifactId naming rule: XXX-spring-boot-starter
+      . @Bean method naming: duplication error를 피하기 위해 최대한 유니크하게 정의한다.
+      .

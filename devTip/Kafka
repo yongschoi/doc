@@ -1,0 +1,225 @@
+----- Kafka 구성 유의사항
+      Kafka를 위한 Zookeeper 클러스터를 별도의 장비에 구축하고, 해당 Zookeeper 클러스터는 Kafka만 사용하도록 하는 것을 권장
+
+----- kafdrp
+      Kafka Topic 관리 도구
+      https://dev.to/ekoutanov/kafdrop-an-open-source-kafka-web-ui-mbn
+
+----- Kafka 용어
+      . Zookeeper: Kafka 노드관리, Offset관리, 과반수 생존방식(5EA경우 3EA이상)으로 홀수로 구성
+      . Topic: 메시지 유통 채널(카톡채팅방). Partition 1EA 설정하면 순서보장 O, 2EA이상 설정하면 순서보장 X
+        * 순서를 보장받고 싶은 Topic을 구성하고 싶으면 Partition을 1로 설정.
+      . Partition: 메시지 분산 Node(Partiton내에서는 순서보장 O, Partition간에는 순서보장 X)
+      . Offset: Partition내 메시지를 식별할 수 있는 유니크한 값(0부터 1씩 증가)
+      . Producer: 해당 Topic에 메시지 기록. 실제로는 Partiton에 기록(default: Round-Robin)
+      . Consumer Instance:
+        1. 하나의 프로세스 혹은 서버로 메시지 처리(소비)주체
+        2. 각각의 Partition에서 데이터를 가져올 뿐, 순서를 고려하지 않는다.
+        3. 하나의 Partition에 대해 Consumer Group내 하나의 Consumer Instance만 접근할 수 있다.
+        * 효율적인 Topic구성은 Partition수와 Consumer Instance수를 동일하거나 50%정도 수준(Partition:4, Consumer Instance:2)
+        4. Consumer Instance수가 많을수록 데이터를 가져오는 속도가 빠름
+        * Kafka의 성능을 좌우하는것은 Partition수 + Consumer Instance수(Counsumer 개수만 늘리면 의미없다)
+        * Partition수는 한번 늘리면 줄일수 없기때문에 partition 수는 초기 작은수에서 점진적으로 늘리는것이 좋다.
+      . Consumer Group:
+        1. 하나의 Consumer Instance가 죽어도 다른 Consumer Instance가 메시지 처리(소비)하여 가용성 확보
+        2. Consumer Instance간 offset 관리로 메시지 일관성 확보
+        3. 동일한 이름의 컨슈머 그룹이 있는지를 체크 해보고 만드는게 중요
+        4. 하나의 Topic에 여러개의 Consumer Group이 접근가능하지만(채널에 여러 구독자가 있듯이) Consumer Group은 하나의 Topic에만 접근 가능(구독자는 동시에 여러채널을 소비할 수 없음)
+        * 하나의 Partiton에 하나의 Consumer만 접근하도록 Consumer Group이 통제함
+      . acks: Producer가 메시지를 보내는 옵션(0, 1, all)
+      . Replica: 복제본(leader-follower)
+        파티션의 leader만 read, write 할 수 있고 follower는 복제만 함.
+      . min.insync.replicas: acks=all 상황에서 최소 복제본의 수를 의미하며, 프로듀서의 옵션이 아니고 브로커의 옵션(브로커의 config/server.properties 파일에서 설정, default=1)
+        * 메시지 critical한 시스템인 경우 손실율 zero 방안
+        * acks=all, Replication Factor=2, min.insync.replicas=1 최적
+        * acks=all, Replication Factor=3, min.insync.replicas=2 최적
+        * 그러나 실 운영환경에서는 acks=1 이 일반적
+      . ISR(In Sync Replica): 복제본 그룹
+
+----- Kafka 로그 포맷
+      FetchRequest [sample,3]와 PartitionFetchInfo(281047443, 1048576)
+      sample이라는 topic에 3번 partition, Offset=281047443이고 Fetch Size=1048576
+
+----- Kafka trade off
+      Consumer가 Broker로부터 메시지를 pull하는 방식이므로 데이터가 없음에도 정기적인 polling으로 인해 자원을 낭비할 수 있음.
+      실제 데이터가 도착할 때까지 long poll 대기를 할 수 있는 parameter 활용가능
+
+----- Kafka 메시지 보존기간
+      . 보존 기간 정책은 log.retention.hours 설정을 통해 가능하며, 기본값 7일
+
+----- Kafka 활용방안(LINE 사례)
+      1. 부하분산
+         하나의 서버에서 처리하지 않고 실제 처리를 위한 프로세스를 호출하는 메시지 큐
+      2. 데이터 허브
+         어떤 서비스에 데이터 업데이트가 발생했을 때, 해당 데이터를 사용하는 다른 여러 서비스에 전파
+      *  Kafka 클러스터를 운영하면서 데이터 양보다 요청 수를 제어하는 것이 중요 -> Kafka의 '요청 쿼터(request quota)'라는 기능을 사용
+
+----- Kafka 추천 옵션
+      . log.retention.hours=72
+        default 168(7일)에서 효율적인 disk 활용을 위해 주말 장애 대비 72(3일)로 설정
+      . delete.topic.enable=true
+        topic 삭제 옵션
+      . allow.auto.create.topics=false
+        설정하지 않은 topic을 자동생성
+      . log.dirs=/data
+        default /tmp/kafka-logs로 OS영역
+
+----- Kafka 체크사항
+      일종의 Message Queue로 Zookeeper(Eureka와 비슷한 Service Discovery & Registry)가 Kafka Cluster를 관리함. 일반적으로 consumer그룹의 consumer수와 partition개수를 동일하게 셋팅하는 것을 권장하며, 하나의 Topic을 여러 partition에 병렬로 write하므로 성능이 우수하다.
+      단, 한번 늘린 파티션은 절대로 줄일 수 없기 때문에 운영중에 파티션을 늘려야 하는건 충분히 고려해 봐야한다. 파티션에 Round-robin으로 write하므로 파티션을 늘렸을때(병렬처리 수를 늘린다는 의미) 순서가 보장이 되지 않는다.
+      또한, 반드시 해당 topic의 파티션은 consumer group과 1:n 매칭을 해야한다. 즉, 하나의 파티션을 consumer group내 서로 다른 consumer가 읽을 수 없다.
+
+      . acks (default:1)
+        0 : 프로듀서는 서버로부터 어떠한 ack도 기다리지 않음. 유실율 높으나 높은 처리량
+        1 : 리더는 데이터를 기록하지만 모든 팔로워가 확인하지는 않음
+        -1(또는 all) : 모든 ISR(In Sync Replica)이 확인. 무손실 but 낮은 처리량
+
+      . MSA환경에서 트랜잭션 처리 방안으로 활용될 수 있음
+        Order -> (MQ) -> Stock -> (MQ) -> Payment -> (MQ) -> Delivery -> (MQ) -> Order
+        설계시, 무한루프에 빠지지 않도록 유념해야 함
+
+      . Topics 설계 Type
+        1. 프로세스 용 Topics 정의(Next 서비스를 명시적으로 지정하는 queuing기반)
+           Order -> (MQ) -> Stock -> (MQ) -> Payment -> (MQ) -> Delivery
+        2. 특정 data 일관성 유지 용 Topics 정의(불특정 관련 서비스에 브로드캐스팅하는 publish-subscribe기반)
+           Delivery 데이터 변경 -> (MQ) -> 변경된 Delivery 데이터를 필요로 하는 유관서비스
+           이런 유형의 Topics는 rollback이 존재하지 않는다. 브로드캐스팅 방식이라 rollback 개념이 필요없음.
+
+       . Acknowledgment
+         - enable-auto-commit: false
+           @KafkaListener 메소드에서 사용하는 속성으로 acknowledgment()는 명시적으로 메시지를 소비했다는 신호이다. 즉, acknowledgment()가 실행되지 않으면 메시지는 소비되지 않았다는 의미다. 따라서 @KafkaListener 메소드에서 acknowledgment() 실행되기 전에 error가 발생하면 그 메시지는 kafka에서 사라지지 않는다.(사라질때까지 무한실행)
+         - enable-auto-commit: true
+           @KafkaListener 메소드가 실행되면 error가 발생해도 해당 메시지는 이미 소비한 것이다.
+
+----- Spring-kafka
+      . kafka only(개발, 성능 측면에서 kafka에 최적화)
+      . kafkaTemplate, @KafkaListener(topics = "")
+      . Spring Boot 버전에 맞는 kafka client 버전이 존재함(https://spring.io/projects/spring-kafka)
+        예) Spring Boot 2.3 users should use kafka-client 2.5.x
+            Spring Boot 2.2.X users should use kafka-client 2.3.x
+
+      <dependency>
+        <groupId>org.springframework.kafka</groupId>
+        <artifactId>spring-kafka</artifactId>
+      </dependency>
+
+----- Spring Cloud Stream
+      . kafka, rabbitMQ, AWS, GCP 등(다양한 미들웨어를 사용하거나 퍼블릭 클라우드에서 제공하는 기능을 활용할 경우)
+      . Binder, @StreamListener
+
+      <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-stream</artifactId>
+      </dependency>
+
+      <!-- kafka -->
+      <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-stream-binder-kafka</artifactId>
+      </dependency>
+
+      <!-- rabbitMQ -->
+      <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-stream-binder-rabbit</artifactId>
+      </dependency>
+
+----- Kafka 메시지 수신방법
+      1. MessageListenerContainer Configuring: KafkaMessageListenerContainer (KMLC) and ConcurrentMessageListenerContainer (CMLC)
+
+         public interface MessageListener<K, V> {
+            void onMessage(ConsumerRecord<K, V> data);
+         }
+      2. @KafkaListener: CMLC only
+
+----- 메시지 리스너 컨테이너
+      1. KafkaMessageListenerContainer
+         Single-Thread 형태
+      2. ConcurrentMessageListenerContainer
+         하나이상의 KafkaMessageListenerContainer
+
+----- Kafka Event 네이밍 Rule
+      event기반 MSA 구현시, Start서비스-to-Target서비스 에 대한 수많은 event가 구성되므로 Naming 규칙은 매우 중요하다.
+
+      1. 비즈니스 구현 관점
+         2.1 Start서비스에서 기능을 수행하고 <send>하면,
+         2.2 Start서비스에서 기능에 대한 rollback <listener구현>하고,
+         2.3 Target서비스에서 기능에 대응하는 <listener구현>하고
+         2.4 Target서비스에서 listener 실행 실패시 rollback을 <send>한다.
+
+      2. Naming 규칙
+         1.1 queuing기반 sender/listener
+             [Start서비스]-[Target서비스]-[기능]
+             예) order-stock-updateqty
+
+             // sender
+             [Start서비스]  => kafkaTemplate.send("order-stock-updateqty", orderStr);
+             // listener구현
+             [Target서비스] => @KafkaListener(topics = "order-stock-updateqty") { ... }
+
+         1.2 publish-subscribe기반 sender/listener(rollback 인 경우)
+             [publish서비스]-[기능]-rollback
+             예) payment-new-rollback
+
+             // sender
+             [publish서비스]  => kafkaTemplate.send("payment-new-rollback", orderStr);
+             // sender
+             [publish서비스]  => kafkaTemplate.send("delivery-new-rollback", orderStr);
+
+             // listener구현
+             [subscribe서비스] => @KafkaListener(topics = {"payment-new-rollback", "delivery-new-rollback"}) { ... }
+
+----- Consumer 프로퍼티
+      . spring.kafka.consumer.max-poll-records=6000
+      . spring.kafka.consumer.fetch-min-size=1MB
+      . spring.kafka.consumer.fetch-max-wait=10s
+
+      * max.poll.records (defulat: 500개) : 10초에 한번 가져오도록 구성할 것이므로 충분히 큰 값으로 지정
+      * fetch.min.bytes  (defulat: 1byte) : consume할 메시지가 최소 1byte 라도 있으면 fetch 하는 것이 디폴트
+      * fetch.max.wait.ms(defulat: 500ms) : fetch.min.bytes 가 채워지지 않았다면 최대 500ms 동안 block 하는 것이 디폴트
+
+----- KafkaTemplate<?, ?>
+      보통 KafkaTemplate<String, String>으로 하는것이 코딩이 쉬움. 만약 Object type으로 하게 되면 Serializer/Deserializer 관련 셋팅을 해줘야 한다. 또한, VO를 전달할 경우 가급적 필드까지 동일해야 한다. 그렇지 않으면 Serializer/Deserializer하면서 JsonProcessingException이 발생할 수 있다.
+
+----- topic 삭제
+      server.properties파일에 delete.topic.enable 설정이 없으면 topic이 삭제되지 않는다.(동일 이름으로 다시 만들수는 있다.)
+      # etc/kafka/server.properties파일
+      delete.topic.enable = true
+
+----- Kafka Multi 처리 결과
+      . 단순 Object 1000건/4core PC에서 수행
+      1) single 처리        : 1분47초(partition 1)
+      2) batch 처리         :     2초(partition 1)
+      3) concurrency=5 처리 :     8초(partition 5) --> core수가 많은 서버에서 수행시 향상 기대
+
+----- TimeoutException
+      KafkaProducer는 더 이상 BufferExhaustedException을 발생시키지 않고 대신 max.block.ms 값을 사용하여 차단 한 후 TimeoutException을 발생시킵니다. block.on.buffer.full 속성이 명시적으로 true로 설정되면 max.block.ms가 Long.MAX_VALUE로 설정됨
+
+----- Kafka 데이터 유실
+      Kafka 클러스터가 깨지면 데이터 유실이 발생할 수 있음.
+      만약, Kafka 클러스터가 장(?)시간 down되는 경우에는 12000ms후에 수행되는 onFailure를 통해 유실되는 데이터 정보를 확보할 수 있다.
+
+----- Spring-Kafka ack-mode
+      . RECORD : 레코드가 처리 될 때 마다 커밋
+      . BATCH  : poll한 레코드가 모두 수행되고 다음 poll 이 수행되기 전에 배치로 일괄 커밋 (default)
+      . TIME   : akc-time 설정 시간 주기로 커밋(ack-time: 5000ms)
+      . COUNT  : 설정된 처리 횟수 후 커밋(ack-count: 100)
+      . COUNT_TIME : ack-time 또는 ack-count 둘 중 하나가 만족될때 커밋
+      . MANUAL : ack.acknowledge()이 수행되었을 경우 바로 커밋하지 않고 배치로 일괄 커밋
+      . MANUAL_IMMEDIATE : ack.acknowledge()이 수행되었을 경우 바로 커밋
+
+----- Consumer offset reset
+      . 오류로 데이터 재처리가 필요한 경우 consumer group의 offset 기능을 사용.
+        1. 개발 테스트를 진행하다가 필요에 의해 offset을 리셋
+        2. 운영중에 예상치 못한 에러 등으로 데이터 누락이 발생하여 일정기간 전으로 다시 offset을 리셋
+      . LAG(producer-consumer간 offset 차이) 값의 증가
+        LAG이 계속 증가한다면 consumer의 처리 속도가 느린 것이기 때문에 consumer의 갯수를 충분히 증가시키거나, consumer의 로직을 더 간략화 해서 빠른 속도로 데이터 처리를 할 수 있도록 변경해야 한다.
+      . https://www.letmecompile.com/kafka-consumer-offset-reset/
+
+      1. producer sends messages 1, 2, 3, 4
+      2. consumer receives messages 1, 2, 3, 4
+      3. consumer crashes가
+      4. producer sends messages 5, 6, 7
+      5. consumer receives messages 5, 6, 7
+
+      위 3단계에서 consumer가 crashes되면 kafka에 offset 정보가 존재하므로 auto-offset-reset이 의미가 없지만 만약 kafka에도 consumer의 offset정보가 없을경우 auto-offset-reset설정이 latest(default)면 최근 offset부터 소비하고 earliest면 처음부터 다시 소비  

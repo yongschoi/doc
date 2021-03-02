@@ -1,0 +1,70 @@
+----- DataSource 설정
+      1. 자동설정: spring.datasource.url이 모든 Datasource의 url이 된다
+      2. 수동설정(Configuration): spring.datasource.jdbc-url로 해야 HikariCP가 인식한다.
+
+----- mapper-locations 설정
+      1. application.yml: mybatis.mapper-locations
+      2. Configuration: example-user 참고
+
+----- transaction 설정
+      Configuration 클래스 설정
+      @Bean
+      public PlatformTransactionManager transactionManager() {
+        return new DataSourceTransactionManager(dataSource());
+      }
+
+----- ResultSet --> Java Object
+
+      String SQL = "SELECT id, user_name, age FROM user";
+          |
+          V
+      class User() {
+        private String id;
+        private String userName;
+        private int age;
+      }
+
+      0. ResultSet:
+      ResultSet rs = stmt.executeQuery(SQL);
+      while(rs.next()){
+        User user = new User();
+
+        user.setId()
+        ...
+      }
+
+      1. RowMapper interface 구현:
+      List<User> userList = jdbcTemplateObject.query(SQL, new UserMapper());
+
+      public class UserMapper implements RowMapper<User> {
+        public User mapRow(ResultSet rs, int rowNum) throws SQLException {
+          User user = new User();
+
+          user.setId(rs.getString("id"));
+          user.setUserName(rs.getString("user_name"));
+          user.setAge(rs.getInt("age"));
+
+          return user;
+        }
+      }
+
+      2. BeanPropertyRowMapper:
+      JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
+      List<User> userList = jdbcTemplate.query(SQL, new BeanPropertyRowMapper<>(User.class));
+
+----- resultMap
+      . JOIN 문장이 실행되어 리턴되는 컬럼의 이름은 as를 사용해서 모두 유니크하게
+      . resultMap의 id는 cart테이블의 PK, collection의 id는 food테이블의 PK
+
+      <resultMap id="cart" type="yongs.temp.vo.Cart">
+        <id property="cartno" column="cartno"/>
+        ...
+        <collection property="food" column="food_no" javaType="ArrayList" ofType="yongs.temp.vo.Food">
+            <id property="no" column="food_no"/>
+            <result property="name" column="name"/>
+        </collection>
+      </resultMap>
+
+----- 대용량 조회
+      <select id="findByAll" resultType="cj.enm.mybatis.vo.UserVo" fetchSize="1000"> 지정
+      * default는 fetchSize="10"

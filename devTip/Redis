@@ -1,0 +1,150 @@
+----- Cache Hit/Cache Miss
+      . Cache Hit: Cache서버에 Data가 있으면 DB를 호출하지 않고 데이터 return
+      . Cache Miss: Cache서버에 Data가 없으면 DB를 호출
+      --> Static한 파일을 Cache해주는 CDN서비스와 동일한 구조
+
+----- Cache서버의 단점
+      메모리 기반이므로 서버 장애 시 데이터 손실.
+      단점을 극복하기 위해서는 cluster를 구성해야 함(Replication)
+
+----- Redis
+      key-value기반 in-memory data store
+      --> 활용예: Data Caching, Token정보저장, Ranking Board 등
+      * 전체 키를 불러오는 Keys 명령어는 상당히 오래 걸리므로 Scan을 사용
+
+----- Maxmemory Policy
+      maxmemory 설정값까지 다 차면 mexmemory policy에 따라 추가 메모리를 확보
+      * write 요청을 받으면 Maxmemory Policy를 무시하고 COW(Copy On Write) 방식으로 동작함. 결과적으로 메모리가 더 필요함. 그러나 Redis 설정중 /proc/sys/vm/overcommit_memory=0이면 주어진 메모리를 더이상 할당을 할 수 없는 설정이므로 에러가 발생될 수 있다. 설정을 1로 하는것이 좋음.
+
+----- used_memory_rss
+      실제 Redis가 사용하고 있는 메모리 영역으로 used_memory보다 클수 있음.
+
+----- Data Type
+      1. Strings: 단순 key-value
+      2. Lists: Array형, 앞뒤에 data를 in/out은 빠르지만 중간에 값을 삽입하는것은 비효율
+      3. Sets: 순서/중복을 허용하지 않 Strings집합
+      4. Sorted Sets: 순서를 허용하는 Sets
+      5. Hashes: DTO타입(user:1000 username lisa password sdjxxdfe age 34)
+
+----- Redis Cluster
+      1. Redis Cluster with Sentinel: Zookeeper와 비슷한(?) Redis Cluster 고가용성 관리 도구
+      2. Redis Cluster Mode: Sentinel없이 Master와 다른 node의 Slave와 엮는방식
+         * Redis Cluster Mode
+           1) 기존의 Sentinel의 감시에서 벗어나 자체 감시 및 Failover
+           2) Redis Cluster Bus용 port(default 16379, 16380) 오픈, 기존port + 10000
+           3) Cluster Node에 대한 자동 샤딩
+
+      https://redis.io/topics/cluster-tutorial
+
+----- Redis Cluster in docker
+      Redis Cluster는 port mapping 을 지원하지 않음
+      * docker는 port mapping기술을 이용하므로 Redis Cluster를 docker로 구성하려면 --net=host 옵션을 사용해야 함.
+
+----- Redis 클러스터 TCP 포트(방화벽 open)
+      1. 6379(default port): 서비스 port
+      2. 16379(cluster bus port): 클러스터 Node간 통신(장애감지, failover등)
+
+----- Master-Slave 모델
+      Node A, B, C로 구성된 클러스터에서 Node B가 down되면 클러스터 기능 수행이 불가능하므로,
+      Node (Master-A|Slave-A), (Master-B|Slave-B), (Master-C|Slave-C)로 구성하여 가용성을 높인다.
+
+----- Consistency
+      Redis Cluster는 기본적으로 asynchronous replication이므로 strong consistency를 보장하지 않는다. Master에게 메시지를 전달하고 Slave까지는 확인하지 않는다(Kafka의 acks=0와 동일한 메커니즘). 즉 Consistency보다 Performance를 우선시 한다.
+      * Redis Cluster는 WAIT 명령으로 필요할 때 동기 쓰기를 지원
+
+----- Master-Slave 메커니즘
+      * maximum window: 클라이언트가 Master 노드에 write할 수 있는 최대 크기
+      * node timeout(cluster-node-timeout): Master 노드없이 유지되는 시간(정말 장애인지 판단하는 시간)
+
+      maximum window가 발생해서 node timeout이 발생하면 해당 master 노드는 실패한것으로 간주하고 slave중 하나를 master로 대체하고 해당 master write 허용금지
+
+----- Consistency 실패 Case
+      만약 node timeout이 너무 크면(?) slave가 master로 승격되는 시간이 충분히 지속되고, 지속되는 시간동안 해당 master에는 계속 write가 허용되므로 그만큼 손실될 수 있다.
+
+----- docker cluster 구성(--net=host 만 지원)
+      --> docker에서 3master-3slave 구성이 불가능 한가 ??? 클러스터 구성은 가능한데, 데이터 저장이 안됨 ㅋ
+      Note that the minimal cluster that works as expected requires to contain at least three master nodes:
+
+      1) redis node 최소 6개 생성( --rm 옵션으로 run하면 클러스터에 rejoin 할수 없다)
+
+      docker run -d --net=host \
+      --name redis1 \
+      -v /home/yongschoi/data/redis_cluster/conf/redis_6371.conf:/usr/local/etc/redis/redis.conf \
+      redis redis-server /usr/local/etc/redis/redis.conf
+
+      2) redis-cli로 cluster생성(Redis 5부터 redis-cli에서 cluster 옵션이 추가)
+
+      1. redis-cli는 port 6379에서만 정상(?) 동작하므로 redis9만 port 6379로 띄우고 -
+      2. -cluster create 수행 host ip를 127.0.0.1으로도 cluster가 된다고 나오는데 확인은 안해봄.
+      3. --cluster-replicas 1 의미는 하나의 마스터가 몇 개의 Slave 설정하느냐 (1이면 master1-slave1)
+
+      docker exec -it redis9 redis-cli --cluster create 10.0.2.15:6371 10.0.2.15:6372 10.0.2.15:6373 10.0.2.15:6374 10.0.2.15:6375 10.0.2.15:6379 --cluster-replicas 1
+
+      * 앞3개 master 뒤3개 slave는 자동으로 엇갈려서 mapping
+        master1 master2 master3 slave3 slave1 slave2
+
+        master1 --> slave1
+        master2 --> slave2
+        master3 --> slave3
+
+      3) cluster 노드 확인
+      docer run -it redis
+      docker exec -it redis9 redis-cli
+      127.0.0.1:6379> cluster nodes
+
+      https://jaehun2841.github.io/2018/12/03/2018-12-03-docker-10/#auto-sharding
+
+------ redis-cli 한글깨짐
+       docker exec -it redis redis-cli --raw
+
+----- for Database Cache
+      단순 DB Cache로 활용할 경우에는 관련 객체 implements Serializable하고 default configuration으로 실행하는것이 단순하고 type 오류도 없음
+
+      - Read
+        1. 요청데이터 있는지 확인
+        2. 존재하면 요청데이터 return하고 expire 업데이트 후 종료
+        3. 요청데이터 없거나 expire 만료되었으면 삭제 후 db 서버에 요청
+        4. DB에서 가져온 데이터를 캐싱하고 요청데이터를 return하고 종료
+        --> R 메소드에 @Cachable 로 구현됨
+
+      - CUD
+        1. DB에 정보 업데이트 하고
+        2. 변경된 데이터를 Redis에서 삭제후 종료
+        --> CUD 메소드에 @CacheEvict 로 구현됨
+
+      * 새벽시점 batch작업으로 expire된 데이터를 일괄 삭제한다.
+
+----- RedisTemplate<String, String>는 default로 제공함.
+
+----- Redis repository dto 설정
+      @RedisHash("product") // Redis에 들어가는 key는 "@RedisHash값 + @Id값"
+      public class Product implements Serializable {
+        @Id
+        private String id;
+      }
+
+      객체를 Cacheable로 활용할 경우 반드시 implements Serializable 설정한다.
+
+----- 고려해볼만한 Cache의 대상
+      . 반복적으로 동일한 정보 제공
+      . 정보의 변경주기가 빈번하지 않은 정보
+      . 처리 시간이 오래 걸리는 정보
+      . 반드시 실시간일 필요가 없는 정보
+      --> 예(포탈 검색어, 베스트셀러, 추천상품, 방문자수, 추천수, 1회성 인증정보, 공지사항, 이미지)
+
+----- Cache설정 체크사항
+      . 캐싱 대상
+      . 캐싱 정보의 TTL(Time To Live-유효기간) 설정
+      . 캐싱 정보의 갱신시점
+
+----- Spring Cache
+      @Cacheable : 캐시 등록 및 리턴(value: 캐시객체, key: 캐시객체 안에서 key값)
+      @CacheEvict : 캐시 삭제, 초기화(value: 캐시객체, key: 캐시객체 안에서 key값)
+      @CachePut : 캐시를 생성하는 경우에만 사용. @Cacheable과 함께 사용하면 안됨.
+
+----- CacheManager
+      1. new GenericJackson2JsonRedisSerializer 사용
+      2. DTO LocalDateTime에 셋팅
+         @JsonSerialize(using = ToStringSerializer.class)
+         @JsonDeserialize(using = LocalDateTimeDeserializer.class)
+         private LocalDateTime refreshTime;

@@ -1,0 +1,182 @@
+----- Angular Vs. React Vs. Vue
+      . Angular : 모든 것이 준비된 주방으로 우리의 Web App에 필요한 모든 tools와 재료들을 가지고 있다. 만약 수 많은 개발자들이 일하는 거대한 회사라면, 나는 모든 개발자들이 동일한 패턴으로 일을 하는 Angular를 좋아한다.
+      . React : oven (오븐) 이다. 케이크를 굽는 과정에서 분명히 추가적인 tools가 필요하지만 이것은 필요한 것을 만드는 과정에서 tools를 선택하는 유연함을 줄 수 있다. 내가 기술적인 회사에서 능력있는 몇몇 senior 개발자들과 함께 일을 하고 있다면 React는 좋은 선택이다.
+      . Vue : 쉽고 효율적인 방법으로 요리를 정말 빠르게 만들 수 있다. 만약 startup 회사의 새로 생긴 팀에서 엄격한 deadline을 가지고 있다면 나는 VueJS를 좋아할 것이다.
+
+----- Vue 컴포넌트
+      미리 정의된 Vue 인스턴스다.
+
+----- v-for에 v-bind:key 사용
+      반복되는 DOM 내용이 단순한 경우나 의도적인 성능 향상을 위해 기본 동작에 의존하지 않는 경우를 제외하면, 가능하면 언제나 v-for에 key를 추가하는 것이 좋다.
+
+----- Vue 컴포넌트의 data 옵션은 반드시 함수형이어야 한다.
+      1. 전역으로 컴포넌트 정의 방식
+      Vue.component('button-counter', {
+        data: function() {
+          return {
+            count: 0
+          }
+        },
+        template: '<button @click="count++">{{ count }} times clicked</button>'
+      })
+
+      2. 로컬 컴포넌트 정의방식
+      var ComponentA = { /* ... */ }
+      var ComponentB = { /* ... */ }
+      ...
+      new Vue({
+        el: '#app',
+        components: {
+          'component-a': ComponentA,
+          'component-b': ComponentB
+        }
+      })
+
+----- Vue인스턴스의 computed 속성
+      해당 data값이 변경되지 않으면 캐싱 된다.(성능향상)
+      data: {
+        message: '12345'
+      },
+      computed: { //message 값이 변경되지 않으면 캐싱 된다.
+        reversedMessage1: function () {
+          return this.message.split('')
+        }
+      },
+      methods: {  // message값은 항상 메소드 호출 후 반환된다.
+        reversedMessage2: function () {
+          return this.message.split('')
+        }
+      }
+
+      * split() : 문자열을 배열로 분할 "12345" -> ["1", "2", "3", "4", "5"],
+
+----- computed 속성 Vs 메소드
+      computed 속성은 종속 대상에 따라 캐싱되므로, 캐싱을 원하지 않는 경우 메소드를 사용.
+
+----- Vue LifeCycle에서 created vs mounted
+      일반적인 경우에는 구분없이 사용해도 가능하나 프로그램 규모에 따라 컴포넌트간(부모-자식) 통신에 문제가 발생할 수 있다
+
+----- v-if Vs v-show
+      v-if는 조건에 맞아야만 렌더링하고(토글비용 높음),
+      v-show는 무조건 렌더링하므로(초기비용 높음)
+      화면 형식이 사용자 이벤트로 인하여 바꾸기가 필요한 경우 v-show를 사용하고
+      최초 데이터를 로딩할 경우 조건이 필요한 경우에는 v-if 사용
+
+----- Vue 컴포넌트 간 통신방법
+      1. 부모-자식 : props, emit
+      2. A컴포넌트-B컴포넌트 : Evnet bus
+      3. A,B,C,D,E,F... 다수컴포넌트간 : Vuex
+
+----- Event Bus
+      소규모 SPA(소수의 Vue 컴포넌트)에서는 Event Bus 정도만 있어도 충분함.
+      var bus = new Vue()
+      bus.$emit('event-name', 1) // 데이터 보내는쪽
+      bus.$on('event-name', value => ...) // 데이터 받는쪽
+      bus.$once('event-name', value => ...) // 데이터 받는쪽(한번만)
+
+      bus.$off('event-name') // 해당 event-name 해제
+      bus.$off() // 모든 event 해제
+
+----- Event Bus $on, $off
+      보통 event.$on은 컴포넌트 생성될때,
+      event.$off 는 해당 컴포넌트가 사라질때 사용함.
+
+      created() {
+        EventBus.$on('event-name', ...);
+      }
+      beforeDestroy(){
+        EventBus.$off('event-name');
+      }
+
+----- Vuex 란?
+      대규모 SPA 프로젝트에서 필요한 Vue 상태 관리 패턴 & 라이브러리.
+      Event Bus로 관리가 복잡해 질 정도로 컴포넌트가 많은 경우 필요함.
+      (Event Bus는 data-link 와 유사하다고 생각할 수 있으며, 파일로 이벤트 리스트가 관리는 되지만 사용여부를 추적관리하려면 Vuex를 사용해야함)
+
+----- 공통함수 재사용(동일한 함수를 2개 정의해야 하나?)
+      # commonFunc.js
+      export const commonFunc = {
+        methods: {
+          // for Vue 날짜 포맷 함수
+          getDateAndTime(date) {
+            retrun ...
+          }
+        },
+        // for js 날짜 포맷 함수
+        getDateAndTime(date) {
+          retrun ...
+        }
+
+      1. Vue파일에서는 mixins 방식으로 접근한다.
+      # aaa.vue
+      import { commonFunc } from "../mixins/commonFunc"
+      this.getDateAndTime(new Date())
+      mixins: [commonFunc]
+
+      2. 일반 js파일에서는 mixins방식이 아닌 일반 javascript import 방식을 사용한다.
+      # bbb.js
+      import { commonFunc } from "../mixins/commonFunc"
+      commonFunc.getDateAndTime(new Date())
+
+----- 사용자 권한 체크
+      Router Guard를 이용하여 page 접근을 제어할 수 있음.(2가지 방법)
+      1. router index.js에서
+         beforeEnter: (to, from, next) => { }
+      2. 각 component에서
+         beforeRouteEnter(to, form, next) {}
+         beforeRouteLeave(to, form, next) {}
+
+----- redirct 및 없는 페이지 제어
+      router index.js에서
+
+      {
+        // 특정 주소 redirct
+        path: '/redirect-me',
+        redirect: {name: 'users'}
+      },
+      {
+        // 그외 잘못된(?) 모든 주소 redirct
+        path: '/*',
+        redirect: {name: 'home'}
+      }
+
+----- @는 project/src 경로를 의미
+      예) import A from '@/components/A'
+
+----- vuex의 mutations (동기)
+      1. ...mapMutations(['addUser'])를 사용하여 this.addUser(userObj)
+      2. this.$store.commit('addUser', userObj)
+
+----- vuex의 actions (비동기)
+      this.$store.dispatch('addUser', userObj)
+
+----- actions => mutaions => state
+      actions(dispatch): 비즈니스 로직(비번체크 등)
+      mutaions(commit): 상태변경 로직 only(데이터 commit)
+      state: 상태관리
+
+----- 새로고침 로그인 해제 방지
+      vue에서 state정보는 새로고침 시 사라지므로 로그인 정보를 담은 token을 localStorage에 저장하여 활용한다.
+      localStorage에서 해당 정보를 가져오는 함수를 main.js에서 호출한다.
+
+      new Vue({
+        router,
+        store,
+        // 새로고침 로그인해제 방지 로직
+        beforeCreate() {
+          this.$store.dispatch('getUserInfo')
+        },
+        vuetify,
+        render: h => h(App)
+      }).$mount("#app");
+
+----- image 경로 인증
+      <img src="이미지경로" >방식으로 이미지를 display할 경우에는 인증(Token과 같은)을 수행 할 수 없음.
+      또한, <img src="이미지경로" > 방식은 결국 동기적으로 서버를 호출하므로
+      axios와 같은 모듈을 통해서(인증을 위해) 이미지를 가져오는 경우에는 비동기 호출이 되므로 이미지를 control 하는 약간의 기술이 필요함. (axios는 promise를 리턴함)
+      즉, 이미지가 언제 loading 완료 될지 모르므로 이미지 데이터를 저장할 변수가 필요함.
+      (로직이 만만치 않음???)
+      
+----- axios default header
+      webflux gateway에 접근할 경우 axios 헤더에 default로 설정이 잘 안먹음.
+      명시적으로 header를 셋팅해 줘야 함.

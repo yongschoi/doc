@@ -1,0 +1,26 @@
+----- docker에서 mongodb 접속
+      docker exec -it bd32732a7da9 mongo
+
+----- 데이터베이스 목록조회
+      > show dbs
+
+----- 데이터베이스 접속(생성) 및 확인
+      > use 데이터베스명
+      > db
+
+----- collections 목록조회
+      > show collections
+
+----- document 조회
+      > db.collecton명.find()
+
+----- collection 삭제
+      > db.collecton명.drop()
+
+----- Max number of threads (maxWaitQueueSize) of 500 has been exceeded
+      대량 데이타 Reactive 입력시 발생할 수 있으며, waitQueueMultiple 값을 튜닝해야함.
+      예) mongodb://127.0.0.1:27017/flex?waitQueueMultiple=50
+
+----- 배치 Application에서 필드 연산
+       $where:'parseInt(this._id)%10==1' 과 같은 필드연산은 매우 비용이 높음.
+       partition을 위한 필드를 추가하는 것이 성능상 이점이 있음

@@ -1,0 +1,26 @@
+----- AWS 5대 원칙
+      1. 보안
+         . IAM (Identity and Access Management)
+         . 네트워크 보안 (Amazon Virtual Private Cloud)
+         . 데이터 암호(전송중 암호화/저장중 암호화)
+
+      2. 성능 효율성
+         . 셀렉트(가장 적합한 서비스 선택)
+         . 확장(수직/수평 확장)
+
+      3. 안정성
+         . 장애격리
+         . 한도(과도한 부하로부터 서비스를 보호하기 위한 제약)
+
+      4. 운영 우수성
+         . 코드형 인프라스트럭처(환경 설정의 자동화)
+         . 관찰(모니터링 ...)
+
+      5. 비용 최적화
+         . 사용량에 따라 지불
+         . 비용 최적화 수명 주기
+
+----- 용어
+      EC2(Elastic Compute Cloud)
+      ECS(Elastic Container Service)
+      ECR(Elastic Container Registry)

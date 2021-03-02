@@ -1,0 +1,173 @@
+----- ResponseEntity
+      Controller에서 HttpStatus를 셋팅할 필요가 있을 경우에 ResponseEntity 리턴한다.
+      예) status = HttpStatus.UNAUTHORIZED;
+          return new ResponseEntity<String>(response.getBody(), status);
+
+----- Locale 설정
+      . 브라우저에서 영어로 설정하면 message_en.properties
+      . 브라우저에서 영어(미국)로 설정하면 message_en_US.properties
+      . 브라우저에서 한국어로 설정하면 message_ko.properties
+
+----- @CompoentScan
+      library 프로젝트를 참조할 경우 SpringBoot 초기화 fail 발생할 경우 참조 library의 class가 있는 package를 @CompoentScan 설정하면 해결될 수  있다.
+
+----- spring.factories
+      library에서 강제(?)로 초기화 하는 방법으로 /resources/META-INF/spring.factories 에 초기화 할 클래스 설정
+
+----- Spring Boot 2.0과 1.x는 매우 다름
+      표준은 SpringBoot 2.x
+
+----- Image Storage(like minio)
+      이미지를 위한 storage를 사용할 경우 한건의 데이터가 database와 storage로 분산될 경우 DB CRUD 로직에 각별히 유의해야 한다.
+      1) 코딩 관점
+         이미지는 storage에 저장하고 해당 이미지의 url을 db에 저장해서 모든 정보를 DB로 관리하는 방식도 고려해 볼만하다.
+      2) Dependency 설계관점
+         storage 주소가 변경될 것을 고려하면 database와 storage 각각 별도로 관리하는것이 맞다.
+
+----- Lombok 설치
+      !!! IDE에 별도 설치를 해야함
+      1. @Builder 사용시 필요한 field만 가능하도록 한다(id는 제외, 일반 DTO 스타일)
+
+          public class Member {
+            @ID
+            private int id;
+            private Stirng email;
+            private String name;
+
+            @Builder
+            public Member(String email, String name) {
+              this.email = email;
+              this.name = name;
+            }
+            ...
+
+      2. @Builder 사용시 전체 field 셋팅이 가능하고 default 값을 설정하는 경우(Util성 commponent 스타일)
+
+          @Builder
+          public class MiniService {
+            private String ip;
+            private id port;
+            @Builder.Default
+            private String accessKey = "AKIAIOSFODNN7EXAMPLE";
+            @Builder.Default
+            private String secretKey = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY";
+          }
+
+      3. 필수 field 항목이 필요한 경우에는 Effective Java 스타일에 따라 직접 코딩
+          example-starter의 ImageAPI.java 참고
+
+----- Format 이슈
+      ObjectMapper mapper = new ObjectMapper();
+      로 하면 Date Format에서 에러가 발생하므로
+      ObjectMapper mapper = new Jackson2ObjectMapperBuilder()
+                    .featuresToDisable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+                    .modules(new JavaTimeModule())
+                    .timeZone("Asia/Seoul")
+                    .build();
+
+      @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")으로 셋팅하면 2020-02-22T19:35:01
+      @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")으로 셋팅하면     2020-02-22 19:35:01
+
+      * pattern = "yyyy-MM-dd hh:mm:ss" : 12시간 pattern(소문자 hh)
+
+----- Get/Post Controller에서 reqeust data 처리
+      . Get => @PathVariable 혹은 @RequestParam 혹은 ModelAttribute
+      . Post => @RequestBody
+
+----- Date Format(pattern = "yyyy-MM-dd'T'HH:mm:ss") 처리
+      . 날짜 직렬화가 필요할 경우 해당 field에 @DateTimeFormat을 사용
+        @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+        private LocalDateTime requestDateTime;
+
+      . @RequestBody로 사용될 경우에는 @DateTimeFormat과 @JsonFormat 모두 사용 가능하고 만약, 두 어노테이션이 모두 있으면 @JsonFormat이 적용된다.
+      . Response Body로 사용될 경우에는 @JsonFormat만 가능
+
+----- @DateTimeFormat vs @JsonFormat
+      @JsonFormat은 Jackson의 어노테이션이고, @DateTimeFormat은 Spring의 어노테이션이며, Spring의 기본 JSON 컨버터는 Jackson
+
+      1) Get요청 => ModelAttribute 혹은 @RequestParam은 Jackson과 상관없이 JSON 직렬화가 발생하므로 @DateTimeFormat만 가능
+         --> LocalDateFormatter를 적용하면 @JsonFormat 으로 가능함.
+      2) Post 요청 => @RequestBody에서는 @JsonFormat으로 처리하고 없으면 @DateTimeFormat으로 처리(둘다 가능)
+      3) Response Body에서는 Jackson에서만 JSON 직렬화가 발생하므로  @JsonFormat만 가능
+
+      * SpringBoot 2.x에서는 Jackson이 기본의존성이지만 1.x에서는 별도로 dependency를 추가해야함.
+
+----- 년월(2020-09, 202009) 연산
+      . String조작: date(2020-02-23'T'03:34:31) -> String변환 -> 년월 substring -> date변환 -> date연산 -> String변환 -> 년월 substring
+      . Java 8부터 YearMonth 타입 활용:
+
+----- SpringBoot환경 Vs Test 환경
+      SpringBoot환경과 동일한 환경에서 Test를 수행하려면 @RunWith(SpringRunner.class) 설정
+      JUnit5에서는 @RunWith 대신 @ExtendWith(SpringExtension.class)로 설정한다.
+
+----- DTO ::: Spring Boot v2.3.4.RELEASE
+      Controller에서 @RequestBody Object로 받거나 혹은 Object 타입으로 직접 받을 경우 해당 field의 setMethod()가 반드시 존재해야 한다. 즉, http에서 날라오는 string 값들을 해당 DTO에 셋팅할 수 있어야 하기 때문이다.
+
+      --- Controller
+          public void yearmonth(Dto dto) {
+            ...
+          }
+
+          public void yearmonth(@RequestBody Dto dto) {
+            ...
+          }
+
+      --- DTO
+          public class Dto {
+            private String yearMonth;
+
+            public void setYearMonth(YearMonth yearMonth) {
+              this.yearMonth = yearMonth;
+            }
+          }
+
+----- Intellij 비정상 동작
+      해당 프로젝트 폴더에서 .ide/ 삭제하고 재시작
+
+----- XSS(Cross-Site Scripting)
+      스크립트를 삽입하는 공격 기법
+      . Persistent(Stored) XSS: 주로 게시판에 악성스크립트가 포함된 글을 게시하여 다른 사용자가 클릭하면 악성스크립트가 수행되게 하는 방법
+      . Reflected XSS: 사용자가 입력한 값을 다시 result로 보여줄때 악성스크립트를 포함시키는 방법(사용자 세션, 쿠키정보 탈취)
+
+----- @EnableWebMvc를 사용하면 기존 Converter 설정이 모두 Override
+
+----- ObjectMapper
+      Java Object <-> JSON String serialize/deserialize
+
+----- enum type(batch 프로세스에서 많이 활용)
+      1. 제한된 값을 가진 type을 선언할 경우 (봄, 여름, 가을, 겨울)
+      2. type에 따른 계산식이 존재할 경우(Type_A -> value*10, Type_B -> value*20)
+      3. 도메인 데이터 type 정의(CARD['신용', 'PAYCO', 'KAKAO_PAY'], CASH['계좌이체', '현장현금', '무통장입금'])
+      4. 코드테이블 -> Object enum type으로 변경
+         * 단, 해당 코드의 변경이 잦을경우에는 DB로 관리하는이 더 효율적일 수 있으나, 코드는 잘 변경되지 않는다. 예) 냉장식품 F035, 냉동식품 F011, 일반식품 F001 등
+
+      https://woowabros.github.io/tools/2017/07/10/java-enum-uses.html
+
+----- Template Type에 대한 방안
+      1. Template을 DTO 타입별로 정의한다.
+         KafkaTemplate<String, User>, KafkaTemplate<String, Product>, KafkaTemplate<String, Stock>
+         RedisTemplate<String, User>, RedisTemplate<String, Product>, RedisTemplate<String, Stock>
+         장점: Type을 명시할 수 있다.
+         단점: DTO 타입별로 Template을 정의해야함.
+         * RedisTemplate은 GenericJackson2JsonRedisSerializer을 통해서 <T>을 일부 deserialize하지만(일반화로 인하여 LocalDate type은 오류발생)
+         * KafkaTemplate은 GenericXX 을 지원하지 않으므로 <T>을 deserialize 불가
+         * Generic Type으로 Template을 정의하는 것은 매우 불안정함.(비추천)
+
+      2. Template의 모든 Type을 JSON String으로 표준화한다.
+         KafkaTemplate<String, String>
+         RedisTemplate<String, String>
+         장점: 단일 Type(String)으로 simple하다.
+         단점: 개발자가 String to Object / Object to String을 해줘야 한다
+
+----- spring-boot-configuration-processor
+      application.yml 에서 @ConfigurationProperties("minio")로 설정값을 읽어올 경우 사용
+      example-user의 MinioConfig 참조
+
+----- library starter의 개발 Tip
+      - library에 초기값이 필요한 component가 있는 경우 반드시 default값을 셋팅해야 함(해당 모듈을 사용하지 않아도 autoconfiguration으로 인하여 초기값이 없으면 error 발생)
+      - 업무 Spring Boot의 application.yml에서 초기값이 없으면 example-starter에서 셋팅한 초기값을 읽고, application.yml에서 초기값이 있으면 해당 값을 설정하는것이 정상(example-starter의 ImageAPIConfig 참고)
+      - library의 application.yml은 전혀 반영되지 않으므로, 생성하지도 말것.
+      - restTemplate은 업무 Spring Boot에서 생성해야 한다. library에서 생성하면 jaeger의 Span ID를 연속성 유지가 안된다.
+      - jaeger는 restTemplate을 업무 Spring Boot에서 생성해야함(sleuth-zipkin은 library에서 생성해도 정상 동작)
+
+----- library에서 @Autowired
