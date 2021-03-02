@@ -1,0 +1,49 @@
+----- Spring
+      - flexible
+      - productive
+      - fast
+      - secure
+      - supportive
+      -----------------
+      - AOP
+      - IoC/DI
+      - Configuration
+      - Annotation
+      - Security
+
+----- Spring Boot
+      - stand-alone applications(Embed Tomcat, Jetty 등등)
+      - 'starter' dependencies(Simple Configuration)
+      - easy dependencies(3rd party libraries)
+      - Container-optimized
+
+----- Cloud
+      - Distributed/versioned configuration
+      - Service registration and discovery
+      - Routing
+      - Caching
+      - Service-to-service calls
+      - Load balancing
+      - Circuit Breakers
+      -----> Spring Cloud: Cloud 요건을 충족하기 위한 프레임워크
+      - Spring Cloud AWS
+      - Spring Cloud Azure
+      - Spring Cloud GCP
+      - Spring Cloud Netflix
+
+----- MSA(Cloud 환경에 최적화된? Application Architecture, 방법론, 분산 Application 등등)
+      - API Gateway(IoT, Mobile, Browser)
+      - Service Registry & Discovery
+      - Circuit Breaker
+      - Trace
+      - Configuration
+
+----- MSA환경에 최적화된 프레임워크 ?
+      - 고려환경
+        1. Cloud 환경에 따라 프레임워크가 다를수 있다(예:Linux/Windows)
+           . Open Stack/Open Shift
+           . AWS/GCP
+        2. Spring Cloud를 사용하면 끝
+      -------------------------------
+      * 도메인별(유통, 금융, 제조, 공공) Specific 요건 in Cloud 환경
+      예) 주문-재고-결제-배송 비동기 Transaction 지원

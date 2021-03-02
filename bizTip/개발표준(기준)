@@ -1,0 +1,177 @@
+----- 로컬 개발환경
+      . Java 11
+      . Spring Boot 2.4.X
+        . Tomcat 9.0
+        . Servlet Container 4.0
+      . STS-4.9.0.RELEASE
+        . Eclipse 4.18.0.v20201202
+        . Maven 3.6.3
+        . Eclipse Git 5.10.0.202012080955-r
+      . Nginx 1.8
+      . mybatis-spring-boot-starter 2.1.4
+        . mybatis 3.5.6
+      . Code Template 적용
+
+----- 버전정책(Spring Project, Docker Image)
+      <major>.<minor>.<patch> 예) 1.2.3
+      . major : 기존 버전과 호환되지 않게 API 변경
+      . minor : 기존 버전과 호환되면서 기능추가
+      . patch : 기존 버전과 호환되면서 기능수정 및 버그 fix
+
+----- Spring Boot 구조
+      <공통>
+      . Spring profiles 사용
+      . lombok
+
+      <DB>
+      . Mybatis Mapper 사용(mapper.xml)
+      . DataSource: Spring Boot yml 설정
+      . DataSourceMonitoring: 스카우트 적용으로 DataSourceMonitoring 컨셉 불필요
+      . @Transactional 방식
+      . h2 embedded DB
+
+      <Message/Exception>
+      . Spring messages.properties 사용(MessageSource)
+      . Json<T> Object 정의
+      . ExceptionAdvice
+      . Model Validation: spring-boot-starter-validation
+
+      <Doc>
+      . Swagger: https://www.baeldung.com/spring-rest-openapi-documentation
+
+------------------------------ Template
+/**
+ * <pre>
+ * Copyright (c) 2021 CJ OliveNetworks
+ * All rights reserved.
+ *
+ * This software is the proprietary information of CJ OliveNetworks
+ * </pre>
+ *
+ * @author ${user}
+ * @since ${date}
+ *
+ * @History
+ * <pre>
+ * --------------------------------------------------------------
+ * ${date} ${user}(${user}@cj.net) 최초작성
+ * --------------------------------------------------------------
+ * </pre>
+ */
+
+--------------------------------------------------------------------------------
+
+<dependency>
+  <groupId>org.springframework.boot</groupId>
+  <artifactId>spring-boot-starter-validation</artifactId>
+</dependency>
+
+@NotNull: null 검증
+@Min, @Max: 최소값, 최대값 검증
+@Size: 범위 검증
+@Email: e-mail 검증
+@NotEmpty: null이나 size가 0 검증 (String, Collection)
+@NotBlank: null이나 whitespace 검증 (String)
+@Positive, @PositiveOrZero: 숫자 검증
+@Negative, @NegativeOrZero: 숫자 검증
+@Past, @PastOrPresent: 날짜 검증
+@Future, @FutureOrPresent: 날짜 검증
+
+------------------------------ Todo
+
+----- FW 프로젝트 구성
+      . groupId/artifactId 정의
+      . 프로젝트 버전정책(0.0.1)
+        - Java 버전
+        - Websquare Source 버전
+        - Docker Image 버전
+      . package 정의
+      . 아키텍처 구조 및 명명규칙:
+        - controller: XXXController
+        - service: XXXService
+        - dbmapper/repository: XXXMapper, XXXRepository
+        - config: XXXConfig
+        - exception: XXXExcption
+        - model: XXXEntity, XXXVo
+        - util: XXXUtility
+        - handler: XXXAdvice, XXXFilter, XXXInterceptor
+        - SQL파일
+        - 메소드(create/retrieve/update/delete)
+        - 메시지 코드
+
+----- GitLap 환경구성
+
+----- Nexus 환경구성
+
+----- 기본구조
+      . 공통서비스 필요
+        - logging 관리: JDBC 로깅 필요 여부
+        - 개인정보 로깅(시스템 접속로그, 개인정보 처리 등)
+        - 공통코드관리
+
+----- Mybatis Template 코드
+
+----- Rest 호출 Template 코드
+      . Hystrix 적용방안(현실성 고려)
+
+----- Kafka/Redis 관련 class 정의 및 Template 코드
+      . Kafka -> 용도확인
+      . Redis -> 용도확인
+
+----- Object Storage(minio) 적용방안
+
+----- CI/CD
+      . Jenkins pipe line
+      . Code Coverage(Jacoco)
+      . Sonar
+
+----- Batch
+      . 초기 sample code 제공
+      . Control M Vs Jenkins Scheduler
+      . Batch META data
+
+----- SSO(JWT) 처리 interceptor 혹은 filter 구현
+
+
+------------------------------ 설계기준(고려사항)
+
+----- 기존 코드 이슈
+      CommonDao 에 보면
+      . StopWatch 적용 --> 필요시 AOP로 적용
+        @Elapsed Annotation
+      . RowBounds 적용(int defaultMaxRows = 10000) --> 필요하면 명시적 interface 제공
+        public List<?> findByAll()
+        public List<?> findByAllWithRowBounds(RowBounds rowBounds)
+
+     --> 이런 사상이 포함되기를 원한다면 CommonDao 개발필요
+
+----- Data Object Type 정의
+      . Dto type (Parameter)
+      . Vo type (Result Data)
+      --> parameter 갯수 3개까지는 primitive type 권장
+
+----- (Rest) API first Design
+      1. 사용자 관점에서 최우선 Design 되어야 한다.
+      2. Application의 변경은 자주 발생 가능하나 API는 변경이 잦으면 안된다.
+      3. 반드시 문서화 되어야 한다.(Swagger)
+
+----- (Rest) API 설계기준
+      1. External 관점
+         . 화면 중심으로 도출
+         . 서로 다른 서비스 조합
+      2. Internal 관점
+         . 데이터(업무) 중심으로 도출
+         . TX단위 orchestration
+
+----- (Rest) API 설계표준
+      . HTTP URL 명명규칙
+      . HTTP Method GET/POST/PUT/DELETE/HEAD
+
+----- API Versioning
+      . URI Versioning
+        예) http://api.example.com/v1/employee/12345
+            http://apiv1.example.com/employee/12345
+
+      . Accept Header
+        예) http://api.example.com/employee/12345
+            Accept: application/vnd.example.v1+json

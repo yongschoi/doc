@@ -1,0 +1,111 @@
+----- DB접속 환경 정의
+      -- mybatis 기반
+         . application.yml
+
+----- 업무 Message(다국어) 처리(cj.enmframework.util)
+      -- spring.messages 적용
+         . MessageUtil
+
+----- 시스템 공통 Type 정의(cj.enmframework.model)
+      -- Json<T> (As-Is 시스템 참고)
+      -- spring.messages 연계
+         . CommonJson
+         . Json
+
+----- Exception 구조 정의(cj.enmframework.exception)
+      -- Json<T> 연계
+         . BusinessException
+         . SystemException
+         . ExceptionAdvice
+
+----- Data Validation
+      -- spring-boot-starter-validation 적용
+
+----- Open API 적용(cj.enmframework.config)
+      -- springdoc-openapi-ui(Swagger)
+         . OpenAPIConfig
+
+----- Rest API 정의(cj.enmframework.config/cj.enmframework.api)
+      -- RestTemplate 기반
+         . RestAPIConfig
+         . ObjectMapperConfig
+         . RestAPI
+
+----- Template Code 작업
+      -- 메시지 전송 시나리오(cj.enm.json)
+         . JsonController
+         . FakeService
+
+      -- mybatis 시나리오(cj.enm.mybatis)
+         . MybatisConfig
+         . UserController
+         . UserService
+         . UserMapper
+         . UserVo
+
+      -- open API 시나리오(cj.enm.openapi)
+         . CoffeeVoController
+         . TeaController
+         . CoffeeVo
+         . TeaVo
+
+      -- Rest API 호출 시나리오(cj.enm.rest)
+         . ProductController
+         . productService
+         . ProductVo
+         . SearchVo
+         -----
+         Caller 서비스 구성
+
+      -- data validation 시나리오(cj.enm.validation)
+         . ValidMessageConstants
+         . MemberController
+         . MemberDto
+
+----- 2/25 --------------------------------------------------------------------
+
+----- Kafka API 정의(cj.enmframework.config/cj.enmframework.api)
+      -- spring-kafka, Callback 로직 추가
+         . KafkaAPI
+
+----- Kafka 시나리오 구성
+      -- spring-kafka, Callback 로직 추가
+         . KafkaAPI
+
+----- Kafka 모듈 변경 및 package 재정의
+      -- pub
+         . CardController
+         . CardService
+         . OrderDto
+      -- sub
+         . CashSubscriber
+         . CashService
+         . OrderDto
+
+----- Feign 적용 시나리오 작업
+      -- or-ord-svc(주문) 프로젝트 구성
+         . OrderController
+         . OrderService
+         . OrderMapper
+         . DeliveryClient
+      -- fu-otw-svc(배송) 프로젝트 구성
+         . DeliveryController
+         . DeliveryService
+         . DeliveryMapper
+
+----- 모델변환(Entity-Dto) Util 작업
+      -- modelmapper 2.3.9 적용 및 mapList() 구현
+         . ModelMapperUtil
+
+----- 로그 format 정의
+      -- @Slf4j 활용
+        . application.yml 설정
+          logging:
+            pattern:
+              console: "%-5level %d{HH:mm:ss.SSS} %logger[%method:%line] - %msg%n"
+            level:
+              bts: DEBUG
+
+----- fw-feign-lib 개발
+      -- Open Feign 적용
+        . FeignConfig

@@ -1,0 +1,92 @@
+----- 2021-02-09 (W/박민수 부장)
+      => Return Type 일관성:
+         . Json<T>으로 통일:
+      => Exception 처리:
+         . @RestControllerAdvice로 Controller 단에서 일괄처리:
+      => 메시지 관리:
+         . validation 메시지 포함하여 모든 메시지는 message.properties로 관리(MessageResolver):
+         . 일반 alert 메시지와 validation 메시지 분리 고려(W/강백규님):
+           예) message.properties, validation.properties:
+      => spring starter 적용고려
+         . WAS에 특성에 맞는 lib로 분리(사용하는 기능위주의 start 구성필요)
+      => Redis 적용
+         . Spring @Cacheable로 활용할 수 있도록 구성
+
+      => Connetion Read Timeout설정:
+         . 모든 Connetion에 대해 Config 를 통해 설정 가능하도록(특히 feign):
+         . RestTemplate Read timeout => HttpComponentsClientHttpRequestFactory.setReadTimeout(10000):
+         . Mysql Read timeout => jdbc:mysql://XXX:3306/database?characterEncoding=utf8&socketTimeout=10000&connectTimeout=10000:
+         . feign 설정 => feign.client.config.default.readTimeout:
+
+      . HTTP Status code
+         . 최소 1 level 구분(1XX, 2XX, 3XX, 4XX, 5XX)
+         . 1XX 처리중
+         . 2XX 처리완료
+         . 3XX 리다이렉션 and 처리완료
+         . 4XX 클라이언트 잘못(?)으로 오류
+         . 5XX 서버 잘못(?)으로 오류
+
+----- 2021-02-16 (W/박정삼 책임)
+      => Kafka Template 코드:
+         . 동일 프로젝트의 A도메인 package에서 pub, B도메인 package에서 sub:
+         . Template Code작업 bts.fw.tpl.card / bts.fw.tpl.cash 예제코드:
+
+----- 2021-02-18 (W/이성진 책임)
+      => 대용량 Kafka 처리
+         . 시간당 10만건 상품등록 처리
+         . ConsumerBatchConfig 설정으로 처리
+
+----- 2021-02-19 (W/박정삼 책임)
+      => Entity to Dto / Dto to Entity:
+         . model mapper 적용:
+         . https://www.baeldung.com/java-modelmapper-lists:
+
+----- 2021-02-22 (W/박민수 부장)
+      => 멀티 Consumer 방안
+         . ConsumerConfiguration 으로 멀티 등록
+      => Kafka Code 테스트 코드(kafka Mock 구성)
+         . Using Kafka MockProducer 참고
+
+----- 2021-02-23 (W/박민수 부장)
+      => CJ Style boot starter 구조
+      => 대용량 처리(Stream)
+         . LargeDataLowHandler 참고
+         . <참고>
+          import java.io.*;
+          import java.nio.file.*;
+          import java.util.stream.*;
+
+          public class Main {
+              public static void main(String[] args) {
+                  String file = "my-file.txt";
+                  try (Stream<String> stream = Files.lines(Paths.get(fileName))) {
+                      stream.forEach(System.out::println);
+                  }
+                  catch (IOException e) {
+                      System.out.println("An error occurred.");
+                      e.printStackTrace();
+                  }
+              }
+          }
+
+      => RestTemplate deprecated 예정:
+         . Netflix Feign 기반:
+         . https://sabarada.tistory.com/116?category=822738:
+
+----- 2021-02-24 (W/박민수 부장)
+      => Exception 정책 방안
+      => Transaction 정책 방안
+      => CommonJson<T> 사용여부 확인:
+         . 현재 구조 유지(사용성 확인하였으며, 좋은 구조는 그대로):
+
+----- 2021-02-25 (W/박정삼 책임)
+      => jaeger traceId 연계 확인(3/15일까지)
+      => Exception 정책
+
+----- 2021-02-26 (W/박정삼 책임)
+      => Spring Boot Actuator 적용
+         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        . 다양한 WAS 상태정보를 수집 (https://sabarada.tistory.com/23)

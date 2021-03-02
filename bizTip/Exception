@@ -1,0 +1,15 @@
+----- Exception 처리방안
+      . 예외처리 복구: try catch 해서 처리
+        catch (Throwable e) {
+          .. 로직처리 ...
+        }
+
+      . 예외처리 회피: 특정 상황에 대해 caller에게 exception 처리를 전가
+        if (file.isInvalid()) {
+          throw new FileNotFoundException("Invalid file path");
+        }
+
+      . 예외처리 전환: 생한 예외에 대해서 또 다른 예외로 변경. RunTimeException을 상속받은 unchecked Exception으로 감싸서 throws
+        catch (IOException ex) {
+          throw new SystemException("I/O error on " + method.name());
+        }
