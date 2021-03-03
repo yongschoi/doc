@@ -1,0 +1,170 @@
+----- Core Library for BTS Service
+0. 적용대상 서비스
+. BTS 모든 서비스
+
+1. POM.xml dependency 설정
+<dependency>
+  <groupId>cj.bts</groupId>
+  <artifactId>fw-core-lib</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+</dependency>
+
+2. 제공기능(~3/3)
+. 표준 @Responsebody Object Json<T>
+. Data validation
+. logging
+. Data Object 변환 util(Dto to Entity/Entity to Dto)
+. Open API(Swagger)
+
+3. How To
+3.1 표준 @Responsebody Object Json<T>
+. resources/messages/message.properties 정의
+-----------------------------------------------------------------
+ord.order.retrieve.success = 주문조회가 완료되었습니다.
+ord.order.retrieve.param.success = 총 {0}건의 주문이 조회되었습니다.
+-----------------------------------------------------------------
+
+. 예제코드(Controller)
+// Success 처리
+@GetMapping("/prdouct/{code}")
+public Json<List<ProductDto>> getProduct(@PathVariable("code") String code) {
+  List<ProductDto> productList = productServie.getProductList(code);
+  // UI로 넘겨줄 Json(데이터+메시지코드) 셋팅 예제
+  return Json.createJson(productList, "ord.order.retrieve.success");
+  // UI로 넘겨줄 Json(데이터+메시지코드+파라미터) 셋팅 예제
+  String[] param = {productList.size()};
+  return Json.createJson(productList, "ord.order.retrieve.param.success", param);
+
+// Fail 처리
+// UI로 넘겨줄 Error Json(메시지코드+Parameter)을 셋팅한다.
+List<ProductDto> productList = Json.createErrorJson("ord.order.retrieve.fail");
+List<ProductDto> productList = Json.createErrorJson("ord.order.retrieve.fail", param);
+
+3.2 Data validation
+. spring validation annotation list를 통하여 다양한 annotation 사용
+. resources/messages/validation.properties 정의
+-----------------------------------------------------------------
+member.name.notnull = Member Name must not be null
+member.age.min = The minimum age is 14
+-----------------------------------------------------------------
+
+. 예제코드(Dto)
+public class MemberDto {
+  @NotNull(message="{member.name.notnull}")
+  private String name;
+  @Min(value=14, message="{member.age.min}")
+  private Integer age;
+}
+
+3.3 logging
+. application.yml에 설정확인/등록
+logging:
+  pattern:
+    console: "%-5level %d{HH:mm:ss.SSS} %logger[%method:%line] - %msg%n"
+  level:
+    bts: DEBUG
+
+3.4 Data Object 변환 util(Dto to Entity/Entity to Dto)
+. 속성명이 동일한 것만 자동으로 변환한다. 그외(속성명이 다르거나, 추가되는 속성) 값은 직접 get/set으로 변환한다.
+. Util을 통한 변환결과는 runtime시에 정상여부가 확인되므로 속성명을 변경하였을 경우 정상여부를 반드시 확인해야 한다.
+
+. 예제코드(Service)
+public DeliveryDto getDeliveryInfo(String no) {
+  Delivery delivery = deliveryMapper.findByNo(no);
+  return ModelMapperUtil.map(delivery, DeliveryDto.class);
+}
+
+3.5 Open API(Swagger)
+. application.yml에 설정확인/등록
+springdoc:
+  swagger-ui:
+    path: ${spring.application.name}.html
+  version: v1
+
+. boot 기동후 http://localhost:port/서비스-Name.html
+
+
+----- Kafka Library for BTS Service
+0. 적용대상 서비스
+. 비동기 message를 보내는 서비스(PUB)
+. 비동기 message를 받는 서비스(SUB)
+
+1. POM.xml dependency 설정
+<dependency>
+    <groupId>cj.bts</groupId>
+    <artifactId>fw-kafka-lib</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+</dependency>
+
+2. 제공기능
+. message producer
+. message consumer
+
+3. How To
+3.1 pub
+. application.yml에 설정확인/등록
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+
+.예제코드(Service)
+// kafka에 등록된 TOPIC(order-creation)
+private static final String ORDER_CREATION_TOPIC = "order-creation";
+
+@Transactional
+public Object createOrderInfo(OrderDto orderDto) {
+    stocktMapper.update(orderDto.getStock());
+    orderMapper.create(orderDto);
+    kafkaAPI.pub(ORDER_CREATION_TOPIC, orderDto);
+    ...
+}
+
+3.2 sub
+. application.yml에 설정확인/등록
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: order
+
+. 예제코드(Subscriber)
+// kafka에 등록된 TOPIC(order-creation)
+private static final String ORDER_CREATION_TOPIC = "order-creation";
+
+@KafkaListener(topics = ORDER_CREATION_TOPIC)
+public void createOrderInfo(String messageStr) {
+    OrderDto orderDto = kafkaAPI.sub(messageStr, OrderDto.class);
+    orderService.createOrderInfo(orderDto);
+}
+
+----- Feign Library for BTS Service
+0. 적용대상 서비스
+. 동기적으로 remote 호출 서비스(Caller)
+
+1. dependency 설정
+<dependency>
+  <groupId>cj.bts</groupId>
+  <artifactId>fw-feign-lib</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+</dependency>
+
+2. 제공기능
+2.1 default Connetion/Read Timeout 설정
+2.2 feign client basePackages 지정
+
+3. How To
+3.1 Feign default Connetion/Read Timeout(10s/60s), log(NONE)
+3.2 fw-feign-lib default Connetion/Read Timeout(5s/5s), log(BASIC)
+    feign:
+      client:
+        basePackages: bts.ord.httpclient
+
+3.3 업무적으로 해당 속성 변경하려면 feign.client를 명시적으로 설정해야 적용됨(default로 설정하면 적용안됨)
+    feign:
+      client:
+        basePackages: bts.ord.httpclient
+        config:
+          delivery:
+            connect-timeout: 5000
+            read-timeout: 30000
+            logger-level: FULL

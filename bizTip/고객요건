@@ -74,19 +74,24 @@
          . https://sabarada.tistory.com/116?category=822738:
 
 ----- 2021-02-24 (W/박민수 부장)
-      => Exception 정책 방안
-      => Transaction 정책 방안
+      => Exception 정책 방안:
+      => Transaction 정책 방안:
+         . Service Layer에서 @Transactional 설정:
       => CommonJson<T> 사용여부 확인:
-         . 현재 구조 유지(사용성 확인하였으며, 좋은 구조는 그대로):
+         . 현재 구조 유지(잘 Design된 구조이므로 일부 기능추가해서 재사용):
 
 ----- 2021-02-25 (W/박정삼 책임)
       => jaeger traceId 연계 확인(3/15일까지)
-      => Exception 정책
+      => Exception 정책:
 
 ----- 2021-02-26 (W/박정삼 책임)
       => Spring Boot Actuator 적용
          <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
-        . 다양한 WAS 상태정보를 수집 (https://sabarada.tistory.com/23)
+         </dependency>
+         . 다양한 WAS 상태정보를 수집 (https://sabarada.tistory.com/23)
+
+----- 2021-03-02 (W/박민수 부장)
+      => MessageUtil 클래스 재검토:
+      => Feign은 library방식 보다는 가이드로 제공

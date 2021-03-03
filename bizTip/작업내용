@@ -68,10 +68,6 @@
       -- spring-kafka, Callback 로직 추가
          . KafkaAPI
 
------ Kafka 시나리오 구성
-      -- spring-kafka, Callback 로직 추가
-         . KafkaAPI
-
 ----- Kafka 모듈 변경 및 package 재정의
       -- pub
          . CardController
@@ -99,13 +95,17 @@
 
 ----- 로그 format 정의
       -- @Slf4j 활용
-        . application.yml 설정
-          logging:
-            pattern:
-              console: "%-5level %d{HH:mm:ss.SSS} %logger[%method:%line] - %msg%n"
-            level:
-              bts: DEBUG
+         . application.yml 설정
+           logging:
+             pattern:
+               console: "%-5level %d{HH:mm:ss.SSS} %logger[%method:%line] - %msg%n"
+             level:
+               bts: DEBUG
 
 ----- fw-feign-lib 개발
-      -- Open Feign 적용(Connection/Read Timeout, log level)
-        . FeignConfig
+      -- Open Feign 적용(POM, Connection/Read Timeout, log level 설정)
+         . FeignConfig
+
+----- Spring GroupId/Package 구조
+
+----- Exception/Transaction 정책수립 및 가이드

@@ -1,0 +1,58 @@
+----- Exception
+0. 기본정책
+. Exception처리는 @Service Layer에서 수행한다.
+. 방식3가지(Exception 전환/Exception 종료/Exception 회피)
+
+1. How To
+
+1.1 Exception 전환(대부분 Exception 처리방식/96%이상)
+. 명시적으로 catch 하고자 하는 Exception만 처리한다
+. 결과적으로 내가 원하는 메시지를 display
+. log에서 Root Cause 확인하고 fix여부를 판단한다
+
+try {
+  TempUtil temp = new TempUtil();
+  temp.getTemp();
+} catch (FileNotFoundException e) {
+  throw new BTSException("otw.delivery.retrieve.success", e);
+}
+
+1.2 Exception 종료(3%)
+. Exception을 종료한다
+
+int count = 0;
+try {
+  TempUtil temp = new TempUtil();
+  temp.getTemp();
+} catch (FileNotFoundException e) {
+  count++;
+  dto.setCount(count);
+}
+
+1.1 Exception 회피(1%)
+. 나를 호출하는 서비스에게 Exception 처리를 전가한다.
+
+public List<DeliveryDto> getAll() throws FileNotFoundException {
+...
+try {
+  TempUtil temp = new TempUtil();
+  temp.getTemp();
+} catch (FileNotFoundException e) {
+  throw e;
+}
+
+----- Transaction
+0. 기본정책
+. Spring @Transactional 적용
+.  @Service Layer의 모든 DB Create/Update/Delete 메소드에 어노테이션 설정
+
+1. How To
+
+@Service
+public class OrderService {
+  ...
+  @Transactional
+  public Object createOrderInfo(OrderDto orderDto) {
+    stocktMapper.update(orderDto.getStock());
+    orderMapper.create(orderDto);
+  }
