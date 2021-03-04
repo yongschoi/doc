@@ -89,9 +89,10 @@
          . DeliveryService
          . DeliveryMapper
 
------ 모델변환(Entity-Dto) Util 작업
-      -- modelmapper 2.3.9 적용 및 mapList() 구현
-         . ModelMapperUtil
+2021/03/02
+----- 모델변환(Entity-Dto) Utility 개발
+      -- fw-core-lib(cj.bts.framework.util.ModelMapperUtil)
+         . modelmapper2.3.9 적용 및 mapList() 구현
 
 ----- 로그 format 정의
       -- @Slf4j 활용
@@ -102,10 +103,31 @@
              level:
                bts: DEBUG
 
------ fw-feign-lib 개발
-      -- Open Feign 적용(POM, Connection/Read Timeout, log level 설정)
-         . FeignConfig
+----- fw-feign-lib 프로토타이핑
+      -- cj.bts.framework.feign.FeignConfig
+         . Open Feign 적용
+         . Spring Cloud POM 설정, Connection/Read Timeout, log level 설정
 
------ Spring GroupId/Package 구조
+----- Spring GroupId/Package 구조 적용
+      -- cj.bts/cj.bts 리엔지니어링
 
------ Exception/Transaction 정책수립 및 가이드
+2021/03/03
+----- Exception/Transaction 정책수립 및 가이드 초안 작업
+----- fw-core-lib, fw-kafka-lib Wiki 작업
+
+2021/03/04
+----- fw-kafka-lib
+      -- ProduceConfiguration/ConsumerConfiguration 클래스 Vs application.yml 방식
+         . @Configuration 클래스
+           - 장점: 각 서비스에서 Kafka관련 설정 최소화
+           - 단점: Pub만 하는 서비스에서 ConsumerConfiguration Bean도 생성됨
+         . 현재는 application.yml에서 설정하는 방식 유지
+         . 멀티 Consumer가 필요할 경우 @Configuration방식 고려
+
+----- jaeger기반 Trace id 테스트
+      -- spring-cloud-starter-openfeign 이슈
+         . Spring Cloud:2020.0.0버전에서 jaeger tracing이 안됨
+         . jaeger환경에서 ribbon에서 제공했던 LoadBalancerFeignClient 클래스를 못찾는 Error 발생
+         . 2020.0.0에서 spring-cloud-netflix-ribbon 제거됨(Spring Cloud 2020.0 Release Notes)
+         . Spring Boot 2.3.9.RELEASE(Spring Cloud Hoxton.SR10)에서는 정상동작 확인
+         . bts 표준은 2.4.x

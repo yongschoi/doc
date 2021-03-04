@@ -11,10 +11,10 @@
 . log에서 Root Cause 확인하고 fix여부를 판단한다
 
 try {
-  TempUtil temp = new TempUtil();
-  temp.getTemp();
+    TempUtil temp = new TempUtil();
+    temp.getTemp();
 } catch (FileNotFoundException e) {
-  throw new BTSException("otw.delivery.retrieve.success", e);
+    throw new BTSException("otw.delivery.retrieve.success", e);
 }
 
 1.2 Exception 종료(3%)
@@ -22,11 +22,11 @@ try {
 
 int count = 0;
 try {
-  TempUtil temp = new TempUtil();
-  temp.getTemp();
+    TempUtil temp = new TempUtil();
+    temp.getTemp();
 } catch (FileNotFoundException e) {
-  count++;
-  dto.setCount(count);
+    count++;
+    dto.setCount(count);
 }
 
 1.1 Exception 회피(1%)
@@ -35,16 +35,16 @@ try {
 public List<DeliveryDto> getAll() throws FileNotFoundException {
 ...
 try {
-  TempUtil temp = new TempUtil();
-  temp.getTemp();
+    TempUtil temp = new TempUtil();
+    temp.getTemp();
 } catch (FileNotFoundException e) {
-  throw e;
+    throw e;
 }
 
 ----- Transaction
 0. 기본정책
 . Spring @Transactional 적용
-.  @Service Layer의 모든 DB Create/Update/Delete 메소드에 어노테이션 설정
+. @Service Layer의 모든 DB Create/Update/Delete 메소드에 어노테이션 설정
 
 1. How To
 

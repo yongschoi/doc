@@ -23,8 +23,8 @@
          . 1XX 처리중
          . 2XX 처리완료
          . 3XX 리다이렉션 and 처리완료
-         . 4XX 클라이언트 잘못(?)으로 오류
-         . 5XX 서버 잘못(?)으로 오류
+         . 4XX 클라이언트 오류
+         . 5XX 서버 오류
 
 ----- 2021-02-16 (W/박정삼 책임)
       => Kafka Template 코드:
@@ -44,7 +44,7 @@
 ----- 2021-02-22 (W/박민수 부장)
       => 멀티 Consumer 방안
          . ConsumerConfiguration 으로 멀티 등록
-      => Kafka Code 테스트 코드(kafka Mock 구성)
+      => Kafka 모듈 테스트 코드(kafka Mock 구성)
          . Using Kafka MockProducer 참고
 
 ----- 2021-02-23 (W/박민수 부장)
@@ -81,7 +81,7 @@
          . 현재 구조 유지(잘 Design된 구조이므로 일부 기능추가해서 재사용):
 
 ----- 2021-02-25 (W/박정삼 책임)
-      => jaeger traceId 연계 확인(3/15일까지)
+      => jaeger traceId 연계 확인(3/15일까지):
       => Exception 정책:
 
 ----- 2021-02-26 (W/박정삼 책임)

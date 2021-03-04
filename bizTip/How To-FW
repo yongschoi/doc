@@ -83,7 +83,6 @@ springdoc:
 
 . boot 기동후 http://localhost:port/서비스-Name.html
 
-
 ----- Kafka Library for BTS Service
 0. 적용대상 서비스
 . 비동기 message를 보내는 서비스(PUB)
