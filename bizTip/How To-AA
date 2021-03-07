@@ -53,6 +53,6 @@ public class OrderService {
   ...
   @Transactional
   public Object createOrderInfo(OrderDto orderDto) {
-    stocktMapper.update(orderDto.getStock());
-    orderMapper.create(orderDto);
+      stocktMapper.update(orderDto.getStock());
+      orderMapper.create(orderDto);
   }

@@ -91,31 +91,126 @@
 
 2021/03/02
 ----- 모델변환(Entity-Dto) Utility 개발
-      -- fw-core-lib(cj.bts.framework.util.ModelMapperUtil)
+      -- fw-core-lib
          . modelmapper2.3.9 적용 및 mapList() 구현
+         . ModelMapperUtil 개발완료
+
+----- Spring GroupId/Package 구조 적용
+      -- cj.bts/cj.bts 리엔지니어링
+
+2021/03/03
+----- fw-feign-lib 프로토타이핑
+      -- cj.bts.framework.feign.FeignConfig
+         . Open Feign 적용
+         . Spring Cloud POM 설정, Connection/Read Timeout, log level 설정
 
 ----- 로그 format 정의
       -- @Slf4j 활용
-         . application.yml 설정
+         . application.yml 설정완료
            logging:
              pattern:
                console: "%-5level %d{HH:mm:ss.SSS} %logger[%method:%line] - %msg%n"
              level:
                bts: DEBUG
 
------ fw-feign-lib 프로토타이핑
-      -- cj.bts.framework.feign.FeignConfig
-         . Open Feign 적용
-         . Spring Cloud POM 설정, Connection/Read Timeout, log level 설정
-
------ Spring GroupId/Package 구조 적용
-      -- cj.bts/cj.bts 리엔지니어링
-
-2021/03/03
------ Exception/Transaction 정책수립 및 가이드 초안 작업
------ fw-core-lib, fw-kafka-lib Wiki 작업
+----- fw-core-lib, fw-kafka-lib Wiki 작성완료
 
 2021/03/04
+----- jaeger기반 Trace id 테스트
+      -- spring-cloud-starter-openfeign 이슈
+         . Spring Cloud:2020.0.0버전에서 jaeger tracing이 안됨
+         . jaeger환경에서 ribbon에서 제공했던 LoadBalancerFeignClient 클래스를 못찾는 Error 발생
+         . 2020.0.0에서 spring-cloud-netflix-ribbon 제거됨(Spring Cloud 2020.0 Release Notes)
+         . Spring Boot 2.3.9.RELEASE(Spring Cloud Hoxton.SR10)에서는 정상동작 확인
+         . bts 표준은 2.4.x
+
+----- 웹스퀘어 JSON 타입 이슈 확인
+      { string : value }
+      -- JSON
+         {"id":"test", "name":"홍길동", "age":24}
+      -- 웹스퀘어
+         user: {"id":"test", "name":"홍길동", "age":24}
+
+2021/03/05
+----- 아키텍처 공유회의(w/강백규, 이성진, 박정삼, 모성훈)
+
+----- Kafak/Feign 혼합시나리오 작업
+      -- 주문
+         1. 주문데이터 생성 후 pub:
+            OrderController -> OrderService -> (Kafka)
+         2. 결제서비스 sub 후 DB저장: cj.bts.fw.tpl.payment
+            (Kafka) -> PaymentSubscriber -> PaymentService -> PaymentMapper
+         3. 주문정보 저장 : cj.bts.fw.tpl.order
+            OrderService -> OrderMapper
+         4. 상품서비스 rest호출-> ProductClient -> (Feign)
+         4. 상품정보 조회(Feign) : cj.bts.fw.tpl.product
+            (Feign) -> ProductController -> ProductService -> ProductMapper
+         5. 주문결과 리턴        :
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2021/03/08
 ----- fw-kafka-lib
       -- ProduceConfiguration/ConsumerConfiguration 클래스 Vs application.yml 방식
          . @Configuration 클래스
@@ -124,10 +219,9 @@
          . 현재는 application.yml에서 설정하는 방식 유지
          . 멀티 Consumer가 필요할 경우 @Configuration방식 고려
 
------ jaeger기반 Trace id 테스트
-      -- spring-cloud-starter-openfeign 이슈
-         . Spring Cloud:2020.0.0버전에서 jaeger tracing이 안됨
-         . jaeger환경에서 ribbon에서 제공했던 LoadBalancerFeignClient 클래스를 못찾는 Error 발생
-         . 2020.0.0에서 spring-cloud-netflix-ribbon 제거됨(Spring Cloud 2020.0 Release Notes)
-         . Spring Boot 2.3.9.RELEASE(Spring Cloud Hoxton.SR10)에서는 정상동작 확인
-         . bts 표준은 2.4.x
+----- Feign Exception 프로토타이핑
+
+
+
+2021/03/09
+----- Exception/Transaction 정책수립 및 가이드 초안 작업
