@@ -41,18 +41,28 @@ try {
     throw e;
 }
 
+
 ----- Transaction
 0. 기본정책
-. Spring @Transactional 적용
-. @Service Layer의 모든 DB Create/Update/Delete 메소드에 어노테이션 설정
+. Spring @Transactional(선언적 트랜잭션) 적용
+. 모든 @Service 클래스에 설정 @Transactional("transactionManager", readOnly = true)
+  * readOnly속성은 h2에서 지원하지 않음. mysql 5.6.5부터 지원
+. INSERT, UPDATE, DELET 메소드는 @Transactional("transactionManager")
+. 반드시 public 메서드에 적용
 
 1. How To
 
 @Service
+@Transactional("transactionManager", readOnly = true)
 public class OrderService {
   ...
-  @Transactional
+  @Transactional("transactionManager")
   public Object createOrderInfo(OrderDto orderDto) {
-      stocktMapper.update(orderDto.getStock());
-      orderMapper.create(orderDto);
+    stocktMapper.update(orderDto.getStock());
+    orderMapper.create(orderDto);
+  }
+
+  public Object retrieveOrderInfo(OrderDto orderDto) {
+    stocktMapper.selectStock(orderDto.getStock());
+    orderMapper.selectOrder(orderDto);
   }
