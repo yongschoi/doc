@@ -134,7 +134,7 @@
 2021/03/05
 ----- 아키텍처 공유회의(w/강백규, 이성진, 박정삼, 모성훈)
 
------ Kafak/Feign 혼합시나리오 작업
+----- Kafak/Feign 호출 시나리오 작업
       -- 주문
          1. 주문데이터 생성 후 pub:
             OrderController -> OrderService -> (Kafka)
@@ -147,70 +147,93 @@
             (Feign) -> ProductController -> ProductService -> ProductMapper
          5. 주문결과 리턴        :
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 2021/03/08
+----- Transaction 표준 적용 테스트
+      -- @Transactional readOnly속성 활용
+         <dependency>
+           <groupId>mysql</groupId>
+           <artifactId>mysql-connector-java</artifactId>
+         </dependency>
+
+----- 시스템 속성(DB컬럼) transfer 설계
+      -- 입력ID, 입력일시, 입력IP주소, 수정ID, 수정일시, 수정IP주소
+         . HandlerMethodArgumentResolver 방식
+         . threadlocal 방식
+           https://dzone.com/articles/an-alternative-approach-to-threadlocal-using-sprin-1
+
+2021/03/09
+----- 아키텍처 공유회의(w/전체)
+
+----- Feign Exception 테스트 및 프로토타이핑
+      -- 기본 feign Error 처리
+         . callee 서비스 Connection refused -> feign.RetryableException 500
+         . caller 잘못된 api 호출 error -> feign.FeignException 404
+
+----- fw-feign-lib 개발
+      . FeignConfig
+      . FeignExceptionAdvice
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2021/03/10
+----- Exception/Transaction 정책수립 및 가이드 초안 작업
+
 ----- fw-kafka-lib
       -- ProduceConfiguration/ConsumerConfiguration 클래스 Vs application.yml 방식
          . @Configuration 클래스
@@ -219,9 +242,5 @@
          . 현재는 application.yml에서 설정하는 방식 유지
          . 멀티 Consumer가 필요할 경우 @Configuration방식 고려
 
------ Feign Exception 프로토타이핑
-
-
-
-2021/03/09
------ Exception/Transaction 정책수립 및 가이드 초안 작업
+2021/03/11
+----- HandlerMethodArgumentResolver 분석

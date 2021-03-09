@@ -150,6 +150,7 @@ public void createOrderInfo(String messageStr) {
 2. 제공기능
 2.1 default Connetion/Read Timeout 설정
 2.2 feign client basePackages 지정
+2.3 기본 feign Exception 처리
 
 3. How To
 3.1 Feign default Connetion/Read Timeout(10s/60s), log(NONE)
