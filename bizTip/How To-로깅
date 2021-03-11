@@ -1,0 +1,45 @@
+----- 로깅정책
+0. 기본정책
+. @Slf4j 사용
+
+1. How To
++ dependency 설정
+<dependency>
+  <groupId>cj.bts</groupId>
+  <artifactId>fw-core-lib</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+</dependency>
+
++ application.yml 설정
+logging:
+  pattern:
+    console: "%-5level %d{HH:mm:ss.SSS} %logger[%method:%line] - %msg%n"
+  level:
+    cj: DEBUG
+
++ 예제코드
+@Slf4j
+@RequestMapping("/order")
+@RestController
+public class OrderController {
+
+    @GetMapping("/info/")
+    public Json<OrderDto> getOrderInto() {
+        ...
+        log.debug("테스트 로그입니다.");
+        ...
+    }
+
+----- Trace 정책
+0. Istio & jaeger기반
+
+1. How To
+None
+
+2. 이슈
+- spring-cloud-starter-openfeign 이슈
+   . Spring Cloud:2020.0.0버전에서 jaeger tracing이 안됨
+   . jaeger환경에서 ribbon에서 제공했던 LoadBalancerFeignClient 클래스를 못찾는 Error 발생
+   . 2020.0.0에서 spring-cloud-netflix-ribbon 제거됨(Spring Cloud 2020.0 Release Notes)
+   . Spring Boot 2.3.9.RELEASE(Spring Cloud Hoxton.SR10)에서는 정상동작 확인
+   . bts 표준은 2.4.x

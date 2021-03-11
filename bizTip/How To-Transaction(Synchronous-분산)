@@ -1,0 +1,200 @@
+----- 분산(서비스간) Transactiona
+0. 기본정책
+. 서비스 패턴에 따라 Transaction 가이드를 적용
+. 분산 Transaction은 기본적으로 로컬, 서비스별 개별 TX로 인식해야 함
+. 일괄 Rollback 개념이 아닌 케이스별 Rollback 처리를 수행해야 함
+. Rollback을 위한 보상 Transaction을 추가로 개발해야 함
+
+1. 패턴 1(권장): 로컬 Transaction 선행 처리 후, 단일 서비스 Transaction 처리
+. 보상 Transaction api 개발 불필요
+
++ 예제코드(Service)
+@Transactional(value = "transactionManager")
+public int crateOrderInfo(OrderDto orderDto) {
+    // 1. 로컬 Transaction
+    orderMasterMapper.create(orderDto.getOrderMaster());
+    List<OrderDetail> ordertailList = orderDto.getOrderDetailList();
+    ordertailList.forEach(ord -> {
+        orderDetailMapper.create(ord);
+    });
+
+    // 2. A 서비스 Transaction
+    Json<Integer> deliveryResult = deliveryClient.update(orderDto.getDeliveryDto());
+    // 2-1. A 서비스 Transaction 성공여부에 따라 BTSException 발생
+    if(deliveryResult.isError()) throw new BTSException("order.info.create.fail");
+}
+
+2. 패턴 2(권장): 로컬 Transaction 선행 처리 후, 다중 서비스 Transaction 처리
+
+. 참여하는 모든 서비스 Transaction에 상응하는 보상 Transaction api 개발
+. 서비스TX와 로컬TX를 개별 transaction으로 처리
+
++ 예제코드(Service)
+@Transactional(value = "transactionManager")
+public int crateOrderInfo(OrderDto orderDto) {
+    // 1. 로컬 Transaction
+    orderMasterMapper.create(orderDto.getOrderMaster());
+    List<OrderDetail> ordertailList = orderDto.getOrderDetailList();
+    ordertailList.forEach(ord -> {
+        orderDetailMapper.create(ord);
+    });
+
+    // 2. A 서비스 Transaction
+    Json<Integer> deliveryResult = deliveryClient.update(orderDto.getDeliveryDto());
+    if(deliveryResult.isError()) throw new BTSException("order.info.create.fail");
+
+    // 3. B 서비스 Transaction
+    Json<Integer> productResult = productClient.update(orderDto.getProductDto());
+    if(productResult.isError()) {
+        // 3-1. A  서비스 Rollback
+        deliveryClient.updateRollback(orderDto.getDeliveryDto());
+        throw new BTSException("order.info.create.fail");
+    }
+
+    // 4. C 서비스 Transaction
+    Json<Integer> stockResult = stockClient.update(orderDto.getStockDto());
+    if(stockResult.isError()) {
+        // 4-1. A  서비스 Rollback
+        deliveryClient.updateRollback(orderDto.getDeliveryDto());
+        // 4-2. B  서비스 Rollback
+        productClient.updateRollback(orderDto.getProductDto());
+        throw new BTSException("order.info.create.fail");
+    }
+}
+
+3. 패턴 3: 단일 서비스 Transaction 선행 처리 후, 로컬 Transaction 처리
+
+. 단일 서비스 Transaction에 상응하는 보상 Transaction api 개발
+. TransactionTemplate 프로그래밍 방식 적용(@Transactional 적용불가)
+. 서비스TX와 로컬TX를 개별 transaction으로 처리
+
++ 예제코드(Service)
+public int crateOrderInfo(OrderDto orderDto) {
+    // 1. A 서비스 Transaction
+    Json<Integer> jsonResult = deliveryClient.update(orderDto.getDeliveryDto());
+    if(jsonResult.isError()) throw new BTSException("order.info.create.fail");
+
+    // 2. 로컬 Transaction
+    return transactionTemplate.execute(status -> {
+        int result = 0;
+        try {
+            result = orderMasterMapper.create(orderDto.getOrderMaster());
+            List<OrderDetail> ordertailList = orderDto.getOrderDetailList();
+            ordertailList.forEach(ord -> {
+                orderDetailMapper.create(ord);
+            });
+        } catch (Exception e) {
+            // 2-1. 로컬 Transaction Rollback
+            status.setRollbackOnly();
+            // 2-2. A 서비스 보상 Transaction 호출
+            deliveryClient.updateRollback(orderDto.getDeliveryDto());
+            throw new BTSException("order.info.create.fail");
+        }
+
+        return result;
+    });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+4. 패턴 4: 다중 서비스 Transaction(INSERT only) & 로컬 Transaction 처리
+. 참여하는 모든 서비스 Transaction에 상응하는 DELETE Transaction api 개발
+. TransactionTemplate으로 프로그래밍 방식 적용(@Transactional 적용불가)
+. 서비스TX와 로컬TX를 단일 transaction으로 처리
+
++ Pseudo-Code
+public int crateOrderInfo(OrderDto orderDto) {
+    return transactionTemplate.execute(status -> {
+        int result = 0;
+        try {
+            // 1. A 서비스 Transaction
+            Json<Integer> deliveryResult = deliveryClient.create(orderDto.getDeliveryDto());
+            if(deliveryResult.isError()) throw new BTSException("order.info.create.fail");
+
+            // 2. B 서비스 Transaction
+            Json<Integer> productResult = productClient.create(orderDto.getProductDto());
+            if(productResult.isError()) throw new BTSException("order.info.create.fail");
+
+            // 3. 로컬 Transaction
+            result = orderMasterMapper.create(orderDto.getOrderMaster());
+            List<OrderDetail> ordertailList = orderDto.getOrderDetailList();
+            ordertailList.forEach(ord -> {
+                orderDetailMapper.create(ord);
+            });
+        } catch (Exception e) {
+            // 4. 로컬 Transaction Rollback
+            status.setRollbackOnly();
+            // 5. A 서비스 보상 Transaction 호출
+            deliveryClient.createRollback(orderDto.getDeliveryDto());
+            // 6. B 서비스 보상 Transaction 호출
+            productClient.createRollback(orderDto.getProductDto());
+            // 7. Transaction 실패 메시지
+            throw new BTSException("order.info.create.fail");
+        }
+        return result;
+    });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+----- 서비스 호출(Feign) Exception 정책
+0. 기본정책
+. Json<T> 결과여부로 판단한다.
+
+1. How To
+<code>
+Json<DeliveryDto> jsonDeliveryDto = deliveryClient.getDeliveryInfo(orderMaster.getDeliveryNo());
+if(jsonDeliveryDto.isError())
+  throw new BTSException("otw.delivery.retrieve.error");
+
+
+----- 서비스간(분산) Transactiona
+- 보상 Transaction(rollback 기능) 구현 수준
+  * fallback(Circuit Breaker:장애전파방지)
+- 서비스간(분산) transaction 코딩 표준
+
+1. 동기
+2. 비동기(SAGA)

@@ -1,0 +1,37 @@
+----- 메시지
+
+0. 기본정책
+. BTS 표준 @Responsebody Json<T>
+
+1. How To
++ dependency 설정
+<dependency>
+  <groupId>cj.bts</groupId>
+  <artifactId>fw-core-lib</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+</dependency>
+
++ resources/messages/message.properties 정의
+ord.order.retrieve.success = 주문조회가 완료되었습니다.
+ord.order.retrieve.param.success = 총 {0}건의 주문이 조회되었습니다.
+ord.order.complete.param.success = {0} 서비스에서 해당 정보를 제공합니다. 현재 주문건은 {1}건입니다.
+
++ 예제코드(Controller)
+
+List<ProductDto> productList = productServie.getProductList(inProductDto.getName());
+// UI로 넘겨줄 Json(데이터+메시지코드) 셋팅 예제
+return Json.createJson(productList, "ord.order.retrieve.success");
+
+// UI로 넘겨줄 Json(데이터+메시지코드+멀티파라미터) 셋팅 예제
+String[] param = {"상품", "10"};
+return Json.createJson(productList, "ord.order.complete.param.success", param);
+
+// UI로 넘겨줄 Error Json(메시지코드+Parameter)을 셋팅한다.
+List<ProductDto> productList = Json.createErrorJson("ord.order.retrieve.fail");
+List<ProductDto> productList = Json.createErrorJson("ord.order.retrieve.fail", param);
+
+// UI로 넘겨줄 Error Json(메시지코드 + HttpStatus)을 셋팅한다.
+Json<List<String>> result = Json.createErrorJson("ord.order.retrieve.fail", null, HttpStatus.NOT_ACCEPTABLE);
+// UI로 넘겨줄 Error Json(메시지코드 + Parameter + HttpStatus)을 셋팅한다.
+String[] param = {"상품"};
+Json<List<String>> result = Json.createErrorJson("ord.order.retrieve.param.fail", param, HttpStatus.NOT_ACCEPTABLE);

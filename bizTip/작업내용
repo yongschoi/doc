@@ -103,6 +103,8 @@
       -- cj.bts.framework.feign.FeignConfig
          . Open Feign 적용
          . Spring Cloud POM 설정, Connection/Read Timeout, log level 설정
+         . Feign default Connetion/Read Timeout(10s/60s), log(NONE)
+         . fw-feign-lib default Connetion/Read Timeout(5s/5s), log(BASIC)
 
 ----- 로그 format 정의
       -- @Slf4j 활용
@@ -155,7 +157,7 @@
            <artifactId>mysql-connector-java</artifactId>
          </dependency>
 
------ 시스템 속성(DB컬럼) transfer 설계
+----- 시스템 속성(DB컬럼) 적용방안
       -- 입력ID, 입력일시, 입력IP주소, 수정ID, 수정일시, 수정IP주소
          . HandlerMethodArgumentResolver 방식
          . threadlocal 방식
@@ -165,75 +167,105 @@
 ----- 아키텍처 공유회의(w/전체)
 
 ----- Feign Exception 테스트 및 프로토타이핑
-      -- 기본 feign Error 처리
-         . callee 서비스 Connection refused -> feign.RetryableException 500
-         . caller 잘못된 api 호출 error -> feign.FeignException 404
+      -- 기본 feign Exception 처리
+         . callee 서비스: Connection refused -> feign.RetryableException 500
+         . caller 서비스: 잘못된 api 호출 error -> feign.FeignException 404
 
 ----- fw-feign-lib 개발
       . FeignConfig
       . FeignExceptionAdvice
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 2021/03/10
------ Exception/Transaction 정책수립 및 가이드 초안 작업
+----- 분산(서비스간) Transaction 프로토타이핑
+      . 로컬 Transaction 선행 처리 후, A 서비스 Transaction 처리
+      . A 서비스 Transaction 선행 처리 후, 로컬 Transaction 처리
 
+2021/03/11
+----- fw-kafka-lib
+      . KafkaAPI Exception 표준 적용 및 테스트
+
+----- How-to-로깅 가이드 작성
+----- How-to-Message 가이드 작성
+----- How-to-Validation 가이드 작성
+----- How-to-Exception 가이드 작성
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2021/03/12
+----- 분산(서비스간) Transaction 프로토타이핑
+      . 다중 서비스 Transaction
+
+----- How-to-Transaction(로컬) 가이드 작성
+----- How-to-Transaction(Synchronous-분산) 가이드 작성
+
+2021/03/15
+----- fw-feign-lib 가이드 작성
+----- HandlerMethodArgumentResolver 작동원리
+
+2021/03/16
+----- HandlerMethodArgumentResolver 작동원리(계속)
+      . HttpServletRequestArgumentFactory<T, HttpServletRequest>
+      . OperationFactory
+      . OperationArgumentResolver
+
+2021/03/17
 ----- fw-kafka-lib
       -- ProduceConfiguration/ConsumerConfiguration 클래스 Vs application.yml 방식
          . @Configuration 클래스
@@ -241,6 +273,3 @@
            - 단점: Pub만 하는 서비스에서 ConsumerConfiguration Bean도 생성됨
          . 현재는 application.yml에서 설정하는 방식 유지
          . 멀티 Consumer가 필요할 경우 @Configuration방식 고려
-
-2021/03/11
------ HandlerMethodArgumentResolver 분석
