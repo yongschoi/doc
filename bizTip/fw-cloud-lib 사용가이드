@@ -1,0 +1,87 @@
+----- Cloud Library for BTS Service
+0. 적용대상 서비스
+. Cloud BTS 서비스
+
+1. dependency 설정
+<dependency>
+  <groupId>cj.bts</groupId>
+  <artifactId>fw-cloud-lib</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+</dependency>
+
+2. 제공기능
+. OpenFeign(Synchronous 서비스 Call)
+. Cloud Config(Spring Cloud Config/Bus)
+. Service Trace(Jaeger Based)
+
+3. Quickstart
+3.1. OpenFeign
+. feign interface 개발
+
++ 예제코드(@FeignClient)
+@FeignClient(name = "delivery", url = "${feign.delivery.url}")
+@RequestMapping("/delivery")
+public interface DeliveryClient {
+    @PostMapping("/create")
+    Json<Integer> create(@RequestBody DeliveryDto deliveryDto);
+}
+
+. feign client basePackages 및 호출 서비스 주소 지정
++ application.yml 설정
+feign:
+  basePackages: cj.bts.ord.httpclient
+  delivery:
+    url: http://localhost:8082
+
+. 보다 자세한 내용은 How To-Feign 참고
+
+3.2 Cloud Config
+. Config Server에서 설정값을 관리하고, 서비스들에게 설정 정보를 제공
+. 특정서비스 실시간 적용
+. 모든서비스 실시간 일괄 적용(Kafka 기반)
+
+. 향후 How To 제공
+
++ bootstrap.yml 설정
+spring:
+  profiles:
+    active: local
+---
+server:
+  port: 8081
+spring:
+  profiles: local
+  application:
+    name: app-config-client
+  cloud:
+    config:
+      uri:
+      - http://localhost:8888
+  kafka:
+    bootstrap-servers: localhost:9092
+management:
+  endpoints:
+    web:
+      exposure:
+        include: refresh
+
+. 보다 자세한 내용은 How To-Config 참고
+
+3.3 Service Trace
+. 서비스 Trace 관리
+
+. 향후 How To 제공
+
++ bootstrap.yml 설정
+opentracing:
+  jaeger:
+    service-name: ${spring.application.name} # jaeger service Name
+    probabilistic-sampler:
+      sampling-rate: 1.0 # jaeger sampling 비율
+    udp-sender:
+      host: localhost # jaeger server id
+      port: 6831 # jaeger udp Port
+
+4. 개발 Tip
+. Spring Boot 초기 로딩 측면에서 로컬 DB작업만 존재하는 경우에는 fw-cloud-lib를 포함하지 말고 개발
+. Remote 서비스를 호출하는 업무로 확장하는 경우 fw-cloud-lib를 포함하는것이 개발 편의성에 도움이 됨

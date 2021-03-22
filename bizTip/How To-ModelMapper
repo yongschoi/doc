@@ -1,0 +1,27 @@
+----- Model Mapper
+0. 기본정책
+. modelmapper 사용
+. 속성명이 동일한 것만 자동으로 변환한다. 그외(속성명이 다르거나, 추가되는 속성) 값은 직접 get/set으로 변환한다.
+. Util을 통한 변환결과는 runtime시에 정상여부가 확인되므로 속성명을 변경하였을 경우 실행결과를 반드시 확인해야 한다
+
+1. How To
++ dependency 설정
+<dependency>
+  <groupId>cj.bts</groupId>
+  <artifactId>fw-core-lib</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+</dependency>
+
+1.1. Object Type
++ 예제코드
+public DeliveryDto getDeliveryInfo(DeliveryDto deliveryDto) {
+    Delivery delivery = deliveryMapper.selectDelivery(deliveryDto.getNo());
+    return ModelMapperUtil.map(delivery, DeliveryDto.class);
+}
+
+1.1. List<Object> Type
++ 예제코드
+public List<DeliveryDto> getDeliveryList() {
+    List<Delivery> deliveryList = deliveryMapper.selectDeliveryList();
+    return ModelMapperUtil.mapList(deliveryList, DeliveryDto.class);
+}

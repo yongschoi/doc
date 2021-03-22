@@ -7,8 +7,8 @@
          . validation 메시지 포함하여 모든 메시지는 message.properties로 관리(MessageResolver):
          . 일반 alert 메시지와 validation 메시지 분리 고려(W/강백규님):
            예) message.properties, validation.properties:
-      => spring starter 적용고려
-         . WAS에 특성에 맞는 lib로 분리(사용하는 기능위주의 start 구성필요)
+      => spring starter 적용고려:
+         . WAS에 특성에 맞는 lib로 분리(사용하는 기능위주의 start 구성필요):
       => Redis 적용
          . Spring @Cacheable로 활용할 수 있도록 구성
 
@@ -85,12 +85,12 @@
       => Exception 정책:
 
 ----- 2021-02-26 (W/박정삼 책임)
-      => Spring Boot Actuator 적용
-         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-         </dependency>
-         . 다양한 WAS 상태정보를 수집 (https://sabarada.tistory.com/23)
+      => Spring Boot Actuator 적용:
+         <dependency>:
+            <groupId>org.springframework.boot</groupId>:
+            <artifactId>spring-boot-starter-actuator</artifactId>:
+         </dependency>:
+         . 다양한 WAS 상태정보를 수집 (https://sabarada.tistory.com/23):
 
 ----- 2021-03-02 (W/박민수 부장)
       => MessageUtil 클래스 재검토:

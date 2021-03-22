@@ -15,8 +15,10 @@
 . logging
 . Data Object 변환 util(Dto to Entity/Entity to Dto)
 . Open API(Swagger)
+. Actuator(application health check, properties 등)
+. CORS Configuration
 
-3. How To
+3. Quickstart
 3.1. 표준 @Responsebody Object Json<T>
 . resources/messages/message.properties 정의
 -----------------------------------------------------------------
@@ -81,94 +83,3 @@ springdoc:
   version: v1
 
 . boot 기동후 http://localhost:port/서비스-Name.html
-
------ Kafka Library for BTS Service
-0. 적용대상 서비스
-. 비동기 message를 보내는 서비스(PUB)
-. 비동기 message를 받는 서비스(SUB)
-
-1. POM.xml dependency 설정
-<dependency>
-    <groupId>cj.bts</groupId>
-    <artifactId>fw-kafka-lib</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
-</dependency>
-
-2. 제공기능
-. message producer
-. message consumer
-
-3. How To
-3.1. pub
-+ application.yml에 설정
-spring:
-  kafka:
-    bootstrap-servers: localhost:9092
-
-+ 예제코드(Service)
-// kafka에 등록된 TOPIC(order-creation)
-private static final String ORDER_CREATION_TOPIC = "order-creation";
-
-@Transactional
-public int createOrderInfo(OrderDto orderDto) {
-    stocktMapper.update(orderDto.getStock());
-    orderMapper.create(orderDto);
-    kafkaAPI.pub(ORDER_CREATION_TOPIC, orderDto);
-    ...
-}
-
-3.2. sub
-+ application.yml에 설정
-spring:
-  kafka:
-    bootstrap-servers: localhost:9092
-    consumer:
-      group-id: order
-
-+ 예제코드(Subscriber)
-// kafka에 등록된 TOPIC(order-creation)
-private static final String ORDER_CREATION_TOPIC = "order-creation";
-
-@KafkaListener(topics = ORDER_CREATION_TOPIC)
-public void createOrderInfo(String messageStr) {
-    OrderDto orderDto = kafkaAPI.sub(messageStr, OrderDto.class);
-    orderService.createOrderInfo(orderDto);
-}
-
------ Feign Library for BTS Service
-0. 적용대상 서비스
-. 동기적으로 서비스를 호출하는 서비스(Caller)
-
-1. dependency 설정
-<dependency>
-  <groupId>cj.bts</groupId>
-  <artifactId>fw-feign-lib</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
-</dependency>
-
-2. 제공기능
-2.1. default Connetion/Read Timeout 설정
-2.2. feign client basePackages 지정
-2.3. spring-cloud-dependencies
-2.4. 기본 feign Exception 처리
-     . callee 서비스: Connection refused -> feign.RetryableException 500
-     . caller 서비스: 잘못된 api 호출 error -> feign.FeignException 404
-
-3. How To
-3.1. fw-feign-lib default Connetion/Read Timeout(5 SEC / 5 SEC), log(BASIC)
-3.2. feign client 패키지 설정
-+ application.yml에 설정
-feign:
-  client:
-    basePackages: bts.ord.httpclient
-
-3.3. 비즈니스 특성에 따라 해당 속성을 변경하려면 feign.client를 명시적(delivery)으로 설정(default로 설정하면 적용안됨)
-+ application.yml에 설정
-feign:
-  client:
-    basePackages: bts.ord.httpclient
-      config:
-        delivery:
-          connect-timeout: 5000 # 5초
-          read-timeout: 10000 # 10초
-          logger-level: FULL

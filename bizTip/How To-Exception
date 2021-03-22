@@ -1,7 +1,7 @@
 ----- Exception 정책
 0. 기본정책
-. Exception처리는 @Service Layer에서 수행한다.
-. RuntimeException 상속받은 BTSException을 사용한다.
+. Exception처리 결과를 Message로 던질경우 BTSException을 사용한다.
+. BTSException은 RuntimeException이므로 별도의 throws 처리를 하지 않는다.
 
 1. How To
 + dependency 설정

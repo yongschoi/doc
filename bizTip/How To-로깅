@@ -39,7 +39,63 @@ None
 2. 이슈
 - spring-cloud-starter-openfeign 이슈
    . Spring Cloud:2020.0.0버전에서 jaeger tracing이 안됨
-   . jaeger환경에서 ribbon에서 제공했던 LoadBalancerFeignClient 클래스를 못찾는 Error 발생
+   . jaeger환경에서 ribbon에서 제공했던 LoadBalancerFeignClient 클래스를 못찾는 Error 발생(https://github.com/opentracing-contrib/java-spring-cloud/issues/312)
    . 2020.0.0에서 spring-cloud-netflix-ribbon 제거됨(Spring Cloud 2020.0 Release Notes)
    . Spring Boot 2.3.9.RELEASE(Spring Cloud Hoxton.SR10)에서는 정상동작 확인
    . bts 표준은 2.4.x
+
+
+----- opentracing 테스트 환경
+. POM.xml:
+
+<parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>2.4.3</version>:
+    <version>2.3.9.RELEASE</version>:
+    <relativePath /> <!-- lookup parent from repository -->
+</parent>
+<groupId>cj.bts</groupId>
+    <artifactId>fw-feign-lib</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>fw-feign-lib</name>
+    <description>Feign for BTS framework</description>
+    <properties>
+        <java.version>11</java.version>
+        <spring-cloud.version>2020.0.1</spring-cloud.version>:
+        <spring-cloud.version>Hoxton.SR10</spring-cloud.version>:
+    </properties>
+
+
+    <dependency>
+        <groupId>io.opentracing.contrib</groupId>
+        <artifactId>opentracing-spring-jaeger-web-starter</artifactId>
+        <version>3.3.1</version>
+    </dependency>
+    <dependency>
+        <groupId>io.opentracing.contrib</groupId>
+        <artifactId>opentracing-spring-cloud-starter</artifactId>
+        <version>0.5.9</version>
+    </dependency>
+
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-dependencies</artifactId>
+            <version>${spring-cloud.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+
+
+. application.yml:
+
+opentracing:
+  jaeger:
+    service-name: ${spring.application.name} # jaeger service Name
+    udp-sender:
+      host: localhost # jaeger server id
+      port: 6831 # jaeger udp Port

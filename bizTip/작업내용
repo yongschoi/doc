@@ -189,65 +189,6 @@
 ----- How-to-Validation 가이드 작성
 ----- How-to-Exception 가이드 작성
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 2021/03/12
 ----- 분산(서비스간) Transaction 프로토타이핑
       . 다중 서비스 Transaction
@@ -256,16 +197,126 @@
 ----- How-to-Transaction(Synchronous-분산) 가이드 작성
 
 2021/03/15
------ fw-feign-lib 가이드 작성
------ HandlerMethodArgumentResolver 작동원리
+----- How-to-Transaction(Synchronous-분산) 가이드 작성
+
+----- Spring Cloud Config 검토
+      . 설정정보를 동적으로 변경하여 (애플리케이션의 재빌드나, 재구동 없이) 실시간으로 반영시킬 수 있도록 하는 메커니즘을 제공
+      . client --> server --> git
+
+----- Spring Boot 2.4.X Breaking changes
+      1. netflix-hystix, ribbon, zuul 제거
+      2. spring-cloud-netflix-ribbon 제거로 jaeger기반 trace 안됨.
+      3. Bootstrap has been disabled by default(spring.config.import 이용)
 
 2021/03/16
------ HandlerMethodArgumentResolver 작동원리(계속)
+----- Spring Cloud Bus 검토
+      <!-- https://mvnrepository.com/artifact/org.springframework.cloud/spring-cloud-starter-bus-kafka -->
+      <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-bus-kafka</artifactId>
+        <version>3.0.1</version>
+      </dependency>
+
+2021/03/17
+----- fw-core-lib (dependency org.springframework.boot)
+      -- spring-boot-starter-actuator
+         . Application status(health, properties 등)
+         . Spring Config refresh
+      -- CORS Configuration
+
+----- fw-cloud-lib (dependency org.springframework.cloud)
+      -- Cloud Config
+         . Spring Cloud Config
+         . Spring Cloud Bus
+      -- Service Trace
+         . Jaeger
+      -- Openfeign
+         . Rest Call - default connection/read time(5s/5s), log basic
+
+----- zipkin 검토
+
+2021/03/18
+----- Spring Boot 버전변경
+      . 2.4.3 -> 2.3.9.RELEASE
+
+----- fw-cloud-lib (dependency org.springframework.cloud) 계속
+      -- Cloud Config 테스트
+      -- Service Trace 테스트
+      -- Openfeign 테스트
+
+2021/03/19
+----- How To-ModelMapper 작성
+----- How To-OpenAPI 작성
+----- fw-cloud-lib 사용가이드 작성
+----- How To-Feign 작성
+
+----- 프레임워크 회의(w/박민수)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2021/03/XX
+----- HandlerMethodArgumentResolver 작동원리
       . HttpServletRequestArgumentFactory<T, HttpServletRequest>
       . OperationFactory
       . OperationArgumentResolver
 
-2021/03/17
+2021/03/XX
 ----- fw-kafka-lib
       -- ProduceConfiguration/ConsumerConfiguration 클래스 Vs application.yml 방식
          . @Configuration 클래스
@@ -273,3 +324,11 @@
            - 단점: Pub만 하는 서비스에서 ConsumerConfiguration Bean도 생성됨
          . 현재는 application.yml에서 설정하는 방식 유지
          . 멀티 Consumer가 필요할 경우 @Configuration방식 고려
+
+2021/03/XX
+----- Jaeger Trace ID 기반 Transaction관리
+      . Jaeger Trace 설정하면 Service Error() 확인가능하나
+      . 어떤 data가 실패했는지는 확인이 불가능함
+      . TransactionLog.start(T data)와 같은 컴포넌트에 data 를 넘겨주고
+      . 내부적으로 @Transactional(Propagation.REQUIRES_NEW)로 traceId와 data를 저장하고
+      . TransactionLog.end()에서 해당 traceId를 삭제한다.

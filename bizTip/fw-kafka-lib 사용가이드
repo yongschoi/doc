@@ -1,0 +1,52 @@
+----- Kafka Library for BTS Service
+0. 적용대상 서비스
+. 비동기 message를 보내는 서비스(PUB)
+. 비동기 message를 받는 서비스(SUB)
+
+1. POM.xml dependency 설정
+<dependency>
+    <groupId>cj.bts</groupId>
+    <artifactId>fw-kafka-lib</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+</dependency>
+
+2. 제공기능
+. message producer
+. message consumer
+
+3. How To
+3.1. pub
++ application.yml에 설정
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+
++ 예제코드(Service)
+// kafka에 등록된 TOPIC(order-creation)
+private static final String ORDER_CREATION_TOPIC = "order-creation";
+
+@Transactional
+public int createOrderInfo(OrderDto orderDto) {
+    stocktMapper.update(orderDto.getStock());
+    orderMapper.create(orderDto);
+    kafkaAPI.pub(ORDER_CREATION_TOPIC, orderDto);
+    ...
+}
+
+3.2. sub
++ application.yml에 설정
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: order
+
++ 예제코드(Subscriber)
+// kafka에 등록된 TOPIC(order-creation)
+private static final String ORDER_CREATION_TOPIC = "order-creation";
+
+@KafkaListener(topics = ORDER_CREATION_TOPIC)
+public void createOrderInfo(String messageStr) {
+    OrderDto orderDto = kafkaAPI.sub(messageStr, OrderDto.class);
+    orderService.createOrderInfo(orderDto);
+}

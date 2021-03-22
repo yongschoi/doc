@@ -1,15 +1,22 @@
 ----- 분산(서비스간) Transactiona
 0. 기본정책
-. 서비스 패턴에 따라 Transaction 가이드를 적용
-. 분산 Transaction은 기본적으로 로컬, 서비스별 개별 TX로 인식해야 함
-. 일괄 Rollback 개념이 아닌 케이스별 Rollback 처리를 수행해야 함
+. 가급적 분산 Transactiona을 최소화 하는 방향으로 설계 할것을 권고
+. Spring Transaction개발방식은 Simple한 비즈니스(로컬TX와 서비스TX가 상호 섞이지 않는 유형)에 적용이 가능
 . Rollback을 위한 보상 Transaction을 추가로 개발해야 함
 
-1. 패턴 1(권장): 로컬 Transaction 선행 처리 후, 단일 서비스 Transaction 처리
+1. How To
++ dependency 설정
+<dependency>
+    <groupId>cj.bts</groupId>
+    <artifactId>fw-core-lib</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+</dependency>
+
+A. 패턴 1: 로컬 Transaction 선행 처리 후, 단일 서비스 Transaction 처리
 . 보상 Transaction api 개발 불필요
 
 + 예제코드(Service)
-@Transactional(value = "transactionManager")
+@Transactional
 public int crateOrderInfo(OrderDto orderDto) {
     // 1. 로컬 Transaction
     orderMasterMapper.create(orderDto.getOrderMaster());
@@ -24,13 +31,12 @@ public int crateOrderInfo(OrderDto orderDto) {
     if(deliveryResult.isError()) throw new BTSException("order.info.create.fail");
 }
 
-2. 패턴 2(권장): 로컬 Transaction 선행 처리 후, 다중 서비스 Transaction 처리
-
+B. 패턴 2: 로컬 Transaction 선행 처리 후, 다중 서비스 Transaction 처리
 . 참여하는 모든 서비스 Transaction에 상응하는 보상 Transaction api 개발
 . 서비스TX와 로컬TX를 개별 transaction으로 처리
 
 + 예제코드(Service)
-@Transactional(value = "transactionManager")
+@Transactional
 public int crateOrderInfo(OrderDto orderDto) {
     // 1. 로컬 Transaction
     orderMasterMapper.create(orderDto.getOrderMaster());
@@ -62,8 +68,7 @@ public int crateOrderInfo(OrderDto orderDto) {
     }
 }
 
-3. 패턴 3: 단일 서비스 Transaction 선행 처리 후, 로컬 Transaction 처리
-
+C. 패턴 3: 단일 서비스 Transaction 선행 처리 후, 로컬 Transaction 처리
 . 단일 서비스 Transaction에 상응하는 보상 Transaction api 개발
 . TransactionTemplate 프로그래밍 방식 적용(@Transactional 적용불가)
 . 서비스TX와 로컬TX를 개별 transaction으로 처리
@@ -95,6 +100,60 @@ public int crateOrderInfo(OrderDto orderDto) {
     });
 }
 
+D. 패턴 4: 다중 서비스 Transaction 선행 처리 후, 로컬 Transaction 처리
+. 참여하는 모든 서비스 Transaction에 상응하는 보상 Transaction api 개발
+. TransactionTemplate 프로그래밍 방식 적용(@Transactional 적용불가)
+. 서비스TX와 로컬TX를 개별 transaction으로 처리
+
++ 예제코드(Service)
+public int crateOrderInfo(OrderDto orderDto) {
+    // 1. A 서비스 Transaction
+    Json<Integer> jsonResult = deliveryClient.update(orderDto.getDeliveryDto());
+    if(jsonResult.isError()) throw new BTSException("order.info.create.fail");
+
+    // 2. B 서비스 Transaction
+    Json<Integer> productResult = productClient.update(orderDto.getProductDto());
+    if(productResult.isError()) {
+        // 2-1. A  서비스 Rollback
+        deliveryClient.updateRollback(orderDto.getDeliveryDto());
+        throw new BTSException("order.info.create.fail");
+    }
+
+    // 3. 로컬 Transaction
+    return transactionTemplate.execute(status -> {
+        int result = 0;
+        try {
+            result = orderMasterMapper.create(orderDto.getOrderMaster());
+            List<OrderDetail> ordertailList = orderDto.getOrderDetailList();
+            ordertailList.forEach(ord -> {
+                orderDetailMapper.create(ord);
+            });
+        } catch (Exception e) {
+            // 3-1. 로컬 Transaction Rollback
+            status.setRollbackOnly();
+            // 3-2. A 서비스 보상 Transaction 호출
+            deliveryClient.updateRollback(orderDto.getDeliveryDto());
+            // 3-3. B 서비스 보상 Transaction 호출
+            deliveryClient.updateRollback(orderDto.getDeliveryDto());
+            throw new BTSException("order.info.create.fail");
+        }
+
+        return result;
+    });
+}
+
+
+D. 패턴 4: 로컬 Transaction과 서비스 Transaction이 상호 결합된 형태의 비즈니스 처리
+
+<비즈니스 사례>
+1. 로컬 TX
+2. A 서비스 TX
+3. B 서비스 TX
+4. 로컬 TX
+5. C 서비스 TX
+
+. Spring Transaction개발방식 적용불가
+. 로컬TX와 서비스TX는 모두 보상 Transaction을 추가 개발하고 각각 개별TX로 처리
 
 
 
@@ -108,6 +167,14 @@ public int crateOrderInfo(OrderDto orderDto) {
 
 
 
+
+
+
+
+
+
+. 일괄 Rollback 개념이 아닌 케이스별 Rollback 처리를 수행해야 함
+. 분산 Transaction(CREATE/UPDATE/DELETE)은 각 서비스별 개별TX로 인식해야 함
 
 
 
