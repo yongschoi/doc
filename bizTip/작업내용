@@ -250,11 +250,18 @@
 ----- fw-cloud-lib 사용가이드 작성
 ----- How To-Feign 작성
 
------ 프레임워크 회의(w/박민수)
+----- 프레임워크 회의(w/박민수, 주문팀SM)
 
 
+2021/03/22
+----- 프레임워크 요구사항(3/19) 반영
+      . 다중 message files 추가기능 개발
+      . log MDC 적용 테스트
 
-
+----- 프레임워크 wiki 업데이트
+      . How To-OpenFeign 수정
+      . How To-Exception 내용 수정
+      . How To-Message 추가기능 사용법
 
 
 

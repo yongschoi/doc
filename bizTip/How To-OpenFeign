@@ -19,6 +19,10 @@
 public interface DeliveryClient {
     @PostMapping("/create")
     Json<Integer> create(@RequestBody DeliveryDto deliveryDto);
+
+    // GetMapping DTO parameter Type
+    @GetMapping("/code")
+    Json<DeliveryDto> retrieveDelivery(@SpringQueryMap DeliveryDto deliveryDto);
 }
 
 1.2. feign client basePackages 및 호출 서비스 주소 지정
