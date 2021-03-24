@@ -261,6 +261,16 @@
 ----- 프레임워크 wiki 업데이트
       . How To-OpenFeign 수정
       . How To-Exception 내용 수정
+
+2021/03/23
+----- 프레임워크 요구사항(3/19) 반영
+      . 다중 message files 추가기능 개발(계속)
+
+2021/03/24
+----- 프레임워크 요구사항(3/19) 반영
+      . 다중 message files 추가기능 개발(계속)
+
+----- 프레임워크 wiki 업데이트
       . How To-Message 추가기능 사용법
 
 
@@ -291,6 +301,15 @@
 
 
 
+2021/03/25
+----- 시스템 속성(테이블 컬럼) 저장기능
+      -- HandlerMethodArgumentResolver 매커니즘 분석
+
+2021/03/26
+----- 시스템 속성(테이블 컬럼) 저장기능
+      -- HandlerMethodArgumentResolver 개발
+         . OperationFactory
+         . OperationArgumentResolver
 
 
 
@@ -317,11 +336,34 @@
 
 
 
-2021/03/XX
------ HandlerMethodArgumentResolver 작동원리
-      . HttpServletRequestArgumentFactory<T, HttpServletRequest>
-      . OperationFactory
-      . OperationArgumentResolver
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 2021/03/XX
 ----- fw-kafka-lib

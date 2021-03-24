@@ -169,5 +169,3 @@
       - library의 application.yml은 전혀 반영되지 않으므로, 생성하지도 말것.
       - restTemplate은 업무 Spring Boot에서 생성해야 한다. library에서 생성하면 jaeger의 Span ID를 연속성 유지가 안된다.
       - jaeger는 restTemplate을 업무 Spring Boot에서 생성해야함(sleuth-zipkin은 library에서 생성해도 정상 동작)
-
------ library에서 @Autowired
