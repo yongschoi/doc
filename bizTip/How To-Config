@@ -1,0 +1,17 @@
+----- Config 정책
+0. 기본정책
+. 로컬개발환경에서는 application.yml을 활용한다.
+. 서버(Open Shift)환경에서는 Spring Cloud Config/Bus 기능을 활용한다.
+
+1. How To
++ dependency 설정
+<dependency>
+    <groupId>cj.bts</groupId>
+    <artifactId>fw-cloud-lib</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+</dependency>
+
+1.1. 로컬개발환경
+
+
+1.2. 서버(Open Shift) 개발|테스트|실행 환경

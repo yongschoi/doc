@@ -273,37 +273,37 @@
 ----- 프레임워크 wiki 업데이트
       . How To-Message 추가기능 사용법
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 2021/03/25
 ----- 시스템 속성(테이블 컬럼) 저장기능
       -- HandlerMethodArgumentResolver 매커니즘 분석
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 2021/03/26
 ----- 시스템 속성(테이블 컬럼) 저장기능
@@ -311,7 +311,25 @@
          . OperationFactory
          . OperationArgumentResolver
 
-
+2021/03/29
+----- 인수인계 항목
+      -- 개발표준
+         . Spring Boot/Cloud/Starter
+         . Maven 빌드환경
+         . Mybatis 등
+      -- 프레임워크 소스
+         . fw-core-lib
+         . fw-cloud-lib
+         . fw-kafka-lib
+      -- Application Architecture 정책
+         . 표준 JSON
+         . Message
+         . Exception
+         . Transaction
+         . REST 등
+      -- wiki 문서
+      -- gitlab
+      -- nuxus
 
 
 
