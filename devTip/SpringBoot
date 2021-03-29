@@ -51,5 +51,6 @@
 
 ----- spring-boot-starter 라이브러리(example-start 참조)
       . artifactId naming rule: XXX-spring-boot-starter
-      . @Bean method naming: duplication error를 피하기 위해 최대한 유니크하게 정의한다.
-      .
+      . @Bean method naming: 일반적으로 소문자로 시작하는 return type(duplication error를 피하기 위해 최대한 유니크하게 정의한다.<-- 이건 어디서 나온 컨셉인가??)
+      . Custom Properties는 resources/META-INF/spring-configuration-metadata.json 에 정의
+      . @import 어노테이션은 Configuration에서 다른 Configuration을 import할 경우 예) @Import({ DataSourceConfig.class, TransactionConfig.class })

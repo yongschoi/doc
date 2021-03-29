@@ -252,7 +252,6 @@
 
 ----- 프레임워크 회의(w/박민수, 주문팀SM)
 
-
 2021/03/22
 ----- 프레임워크 요구사항(3/19) 반영
       . 다중 message files 추가기능 개발
@@ -275,48 +274,25 @@
 
 2021/03/25
 ----- 시스템 속성(테이블 컬럼) 저장기능
-      -- HandlerMethodArgumentResolver 매커니즘 분석
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+      -- HandlerMethodArgumentResolver 매커니즘 분석 및 개발
 
 2021/03/26
 ----- 시스템 속성(테이블 컬럼) 저장기능
-      -- HandlerMethodArgumentResolver 개발
+      -- HandlerMethodArgumentResolver 매커니즘 분석 및 개발
          . OperationFactory
          . OperationArgumentResolver
 
 2021/03/29
+----- 시스템 속성(테이블 컬럼) 저장기능(계속)
+      -- HandlerMethodArgumentResolver 매커니즘 분석 및 개발
+
+----- PC환경
+      -- Network, MS Teams, VPN, DBSafer
 ----- 인수인계 항목
       -- 개발표준
          . Spring Boot/Cloud/Starter
          . Maven 빌드환경
-         . Mybatis 등
+         . Mybatis, Mysql 등
       -- 프레임워크 소스
          . fw-core-lib
          . fw-cloud-lib
@@ -327,9 +303,11 @@
          . Exception
          . Transaction
          . REST 등
-      -- wiki 문서
+      -- wiki
       -- gitlab
-      -- nuxus
+      -- nexus
+      -- 배치구조 설계
+         . AS-IS 배치에서 EJB호출(온라인 서비스 호출?)
 
 
 
@@ -353,37 +331,12 @@
 
 
 
+2021/03/30
+----- 시스템 속성(테이블 컬럼) 저장기능
+      -- HandlerMethodArgumentResolver 개발
+         . OperationFactory
+         . OperationArgumentResolver
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-2021/03/XX
 ----- fw-kafka-lib
       -- ProduceConfiguration/ConsumerConfiguration 클래스 Vs application.yml 방식
          . @Configuration 클래스
@@ -392,10 +345,91 @@
          . 현재는 application.yml에서 설정하는 방식 유지
          . 멀티 Consumer가 필요할 경우 @Configuration방식 고려
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 2021/03/XX
 ----- Jaeger Trace ID 기반 Transaction관리
       . Jaeger Trace 설정하면 Service Error() 확인가능하나
       . 어떤 data가 실패했는지는 확인이 불가능함
-      . TransactionLog.start(T data)와 같은 컴포넌트에 data 를 넘겨주고
+      . BTSTxLog.start(T data)와 같은 컴포넌트에 data 를 넘겨주고
       . 내부적으로 @Transactional(Propagation.REQUIRES_NEW)로 traceId와 data를 저장하고
-      . TransactionLog.end()에서 해당 traceId를 삭제한다.
+      . BTSTxLog.end()에서 해당 traceId를 삭제한다.
