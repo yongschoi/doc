@@ -1,0 +1,9 @@
+----- 데이터
+      . 학습 데이터(mnist.train) : 학습지, 참고서 / 55,000건
+      . 테스트 데이터(mnist.text) : 모의고사      / 10,000건
+      . 검증 데이터(mnist.validation) : 본고사    /  5,000건
+
+----- 데이터셋
+      . xs: 학습 이미지 mnist.train.images
+      . ys: 학습 라벨 mnist.train.labels
+      
