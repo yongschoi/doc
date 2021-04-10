@@ -1,6 +1,9 @@
 ----- docker 일반 컨테이너 접속하기
       docker exec -it bd32732a7da9 /bin/bash
 
+      maria: docker exec -it d6f3feb12067 /bin/bash
+             root@d6f3feb12067:/# mysql -u root -p
+             
       Redis: docker exec -it bd32732a7da9 redis-cli
       mongo: docker exec -it bd32732a7da9 mongo
 
