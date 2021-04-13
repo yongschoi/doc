@@ -18,7 +18,7 @@
       5. remote shell 로직에서 error 처리를 하지 않으면 스크립트는 정상처리 되어도 exit_code가 1이 발생하여 jenkins처리결과는 fail이 된다.
 
       사용해본 결과 jenkins는 docker가 아닌 직접 개발서버(?)에 설치해서 사용하는것이 보다 효과적일 수 있다.
-      jenkins를 컨테이너로 운영할 경우에는 jenkins docker에서 개발서버의 shell(git clone, mvn build, image build, deploy등)을 invoke시키는 방식이 가장 효과적이다.
+      jenkins를 컨테이너로 운영할 경우에는 jenkins docker에서 개발서버의 shell(git clone, mvn build, image build, deploy등)을 invoke시키는 방식이 가장 효과적이다.(openssh-server 설치 필수)
 
 ----- GitLap
       SW개발 전체공정(프로젝트관리, 이슈관리, CI/CD 등)을 하나의 도구로 시각화 함(issue -> merge request -> commit -> build -> test -> deployement)
