@@ -1,0 +1,13 @@
+----- 가상환경
+      . docker환경과 유사하게 python 실행환경을 가상으로 생성(여러 버전 충돌관리)
+
+      -- pip 방식
+         . 해당 작업 directory를 생성하고 cd [work_dir]
+         . pythons -m venv [가상환경이름]
+         . 가상환경 실행 : source /[가상환경이름]/bin/activate
+         . 가상환경 종료 : deactivate
+
+      -- anaconda 방식
+         . conda create --name [가상환경이름]
+         . 가상환경 실행 : conda activate [가상환경이름]
+         . 가상환경 종료 : conda deactivate
