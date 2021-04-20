@@ -1,0 +1,80 @@
+----- 종류
+      . Supervised Learning : 데이터에 정답이 있는 정답예측 모델(개/고양이 분류)
+      . Unsupervised Learning : 데이터에 정답이 없음(비슷한거 추천 알고리즘 활용)
+      . Reinforcement Learning : 게임학습
+
+----- activation function
+      . hidden layer에 의미를 부여하여 비선형적인 예측을 적용할때
+      . activation='swish'
+      . activation function을 적용하지 않으면 hidden layer는 의미가 없어지며, Neural Network가 아님
+
+----- 러닝머쉬이란
+      . 예측값과 실제값의 오차를 최소화하는 가중치값 및 bios을 찾는 행위
+
+----- learning rate optimizer
+      . loss 최소값을 효율적으로 빨리 찾기위한 도구(정답을 없고 여러개 적용후 선택)
+      . 효율적인 학습을 위한 최적화된 알고리즘
+      . 일반적으로 Adam 알고리즘 적용
+
+----- programming VS. machine learning
+      . programming : data + rule(특징, feature, 가중치) ==> answer
+      . machine learning : data + answer ==> rule(특징, feature, 가중치)
+
+----- 모델 만드는 방식
+      . Sequential API : 순차적 처리(Stack)
+      . Functional API : 프로세스 처리(명시적 입출력 정의)
+      . Subclassing : ???
+
+----- MNIST 데이터
+      . 학습 데이터(mnist.train) : 학습지, 참고서 / 55,000건
+      . 테스트 데이터(mnist.text) : 모의고사      / 10,000건
+      . 검증 데이터(mnist.validation) : 본고사    /  5,000건
+
+----- 데이터셋
+      . xs: 학습 이미지 mnist.train.images
+      . ys: 학습 라벨 mnist.train.labels
+
+----- one-hot 벡터
+      . 단 하나의 차원에서만 1이고, 나머지 차원에서는 0인 벡터
+      . 서로 다른 여러 항목 중 하나일 확률을 계산할때 최적
+
+----- softmax regression
+     예측 확률          가중치            입력값  바이어스(bias)
+     |y1|              |W11, W12, W13|   |x1|   |b1|
+     |y2|     = softmax|W21, W22, W23| * |x2| + |b2|
+     |y3|              |W31, W32, W33|   |x3|   |b3|
+
+----- 크로스 엔트로피
+      . 우리의 예측이 실제 값을 설명하기에 얼마나 비효율적인지를 측정하는 것
+
+----- 경사 하강법(gradient descent algorithm)
+      . 텐서플로우가 각각의 변수 비용을 줄이는 방향으로 조금씩 이동
+
+----- 확률적 학습(stochastic training)
+      . 무작위 데이터의 작은 배치를 사용하는 방법(5만개 중 무작위 100개를 선택)
+
+----- 퍼셉트론(Perceptron)
+      . Perception(인지능력) + Neuron(신경세포) = 인공뉴런
+      . 학습(머신러닝)이란 퍼셉트론의 오류가 최소화될 수 있는 방향으로 가중치를 조금씩 조정해가는 것
+      . 가중치(weight)와 편향(Bias)을 고려하여 만든 수식
+        y1 = x1w1 + x2w2 + ... + b
+
+----- tensor
+      . 데이터 자체: 차원 = 변수(컬럼)
+      . 데이터 형태(shape): 차원 = 배열의 깊이
+      . Black & White image : (3, 7), 2차원의 형태, 21차원 이미지 ==> 학습이미지 50000장 (50000, 3, 7)
+      . RGB image : (3, 7, 3), 3차원의 형태, 63차원 이미지 ==> 학습이미지 60000장 (60000, 3, 7, 3)
+
+----- Convolution(합성곱)
+      . 특정한 패턴의 특징이 어디서 나타나는지를 확인하는 도구
+      . 이미지의 특징을 찾는것
+      . 8은 위아래 o이 각 1개씩
+
+----- 필터
+      . 필터 1개에 1개의 이미지 생성
+      . 필터셋은 3차원 형태로 된 가중치의 모음
+
+----- CNN(Convolution Neural Network)
+      . Convolution Layer :
+      . Max Pooling Layer : 특징적인 가장큰 숫자를 남기면서 이미지 size를 축소
+      . Flatten Layer

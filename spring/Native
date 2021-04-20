@@ -1,0 +1,11 @@
+----- GraalVM
+      -- Overview
+         . Graal <-- Grail(프랑스어 큰쟁반)
+         . VM <-- JVM의 Virtual Machine
+      -- 구성요소(특징)
+         1. Just-In-TIme 컴파일러(고성능)
+         2. Ahead-of-Time 컴파일러(사전 컴파일)
+         3. 다국어(Java, Kotlin, Python, Scala 등)
+      -- JVM대체로서 GraalVM
+         . 성능측면에서 언어별 개별 컴파일러에는 못미치지만 유지보수측면에서 강점
+         . 컨테이너 실행환경에 최적화(start up 시간은 빠르지만 0.00xxbut, build 시간이 오래걸림)
