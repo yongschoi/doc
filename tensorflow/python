@@ -1,13 +1,31 @@
 ----- 가상환경
-      . docker환경과 유사하게 python 실행환경을 가상으로 생성(여러 버전 충돌관리)
+      . docker환경과 유사하게 python 실행환경을 가상으로 생성(여러버전 충돌회피)
 
       -- pip 방식
          . 해당 작업 directory를 생성하고 cd [work_dir]
          . pythons -m venv [가상환경이름]
-         . 가상환경 실행 : source /[가상환경이름]/bin/activate
-         . 가상환경 종료 : deactivate
+         . 가상환경 실행: source /[가상환경이름]/bin/activate
+         . 가상환경 종료: deactivate
 
-      -- anaconda 방식
+      -- anaconda 방식(추천)
          . conda create --name [가상환경이름]
-         . 가상환경 실행 : conda activate [가상환경이름]
-         . 가상환경 종료 : conda deactivate
+         . 가상환경 실행: conda activate [가상환경이름]
+         . 가상환경 종료: conda deactivate
+
+      -- python3 모듈 설치(env 가상환경에 설치)
+         1. 가상환경 실행
+            $/home/yongschoi/py/anaconda3/bin/conda init
+            $conda activate env
+         2. 모듈설치
+            (env)$pip3 install 모듈
+            (env)$conda deactivate
+         3. anaconda 원복
+            $ .bashrc에서 conda initialize 이하 삭제
+
+         4. 현재 vscode에서 python 실행은 가상환경(evn)의 python3로 셋팅
+            .vscode/settings.json 에서 "/home/yongschoi/py/anaconda3/envs/env/bin/python3" 설정확인
+
+----- lambda
+      . map(): map(함수, 리스트) >>> map(lambda x: x ** 2, range(5))
+      . reduce(): reduce(함수, 순서형 자료) >>> reduce(lambda x, y: x + y, [0, 1, 2])
+      . filter(): filter(함수, 리스트) >>> filter(lambda x: x % 2, range(10))

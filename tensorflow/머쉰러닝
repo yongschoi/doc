@@ -1,6 +1,43 @@
+----- tensorflow를 스터디 하니
+      -- 목적
+        . 좋던 싫던 쌓여가는 데이터에 생명을 불어넣고 의미를 부여함으로써 시사점을 얻고
+        . 그 시사점을 바탕으로 새로운 정책을 만들거나 신규 비즈니스를 개발할 수 있다
+
+      -- 내용
+        . 데이터에 대한 특징, 연관성을 찾아서(문과적 관점/인간)
+        . 규칙화하고 수식화하는것이 목표인데(이과적 관점/기계)
+        . 그렇게 만들어진 수식을 tensorflow에서는 퍼셉트론이라고 함
+        . 퍼셉트론은 weight과 bios로 이루어진 수식(y = w1x1 + w2x2 + ... + b)
+        . machine learning을 한다는 것은 w와 b를 찾는것이다(x, y는 이미 데이터가 있다)
+        . 일반적인 프로그램 관점에서는 y를 찾는것인데 반해 데이터과학 관점에서는 규칙(w와 b)을 찾는것이다
+        . w와 b에 아주 작은 적당한 값들을 적용해 가면서(머신러닝) 퍼셉트론식을 완성해 간다
+        . 이렇게 만들어진 페셉트론 식을 우리는 model이라고 정의한다
+        . 잘 만들어진 model일 수록 의미있는 예측이 가능하다
+        . 잘 만들어진 model이란 loss(실제값과 예측값의 오차)가 0에 가깝다는 것을 의미한다
+
+      -- 깨달음
+        . model을 어떻게 정의하냐에 따라 의미있는 예측이 가능한데..
+        . model을 잘 정의하려면 데이터를 잘 알아야 한다
+        . 좋은 model을 만들려면 학습 데이터를 잘 만드는 것이 중요하다
+        . 학습 데이터의 대략적인 특성(최대값, 최소값, 평균값, 분포 등)을 파악해야
+        . 어떤 shape으로 만들지를 결정할 수 있다
+        . 이미 정리된 모델(MNIST, ResNet, EfficientNet)을 적용하려면 그에 맞는 학습데이터를 만들어야 한다(2, 3차원 배열형태 등)
+        . 그러기 위해서는
+        . 첫째, 기본적으로 모든 데이터를 수치화 해야하고
+        . 둘째, 모델 적용을 위한 적당한 데이터 조작이 필요하다(정규화, Flatten, reshape 등등)
+        . Python이 이런 작업에 나름 최적화된 프로그램밍 언어이다
+
+----- 인공지능
+        ^
+        |
+      머쉰러닝(대표 library:scikit-learn) : 인공지능 중 하나의 분야
+        ^
+        |
+      딥러닝(대표 library:tensorflow) : 수많은 머쉰러닝 알고리즘 중 인공신경망을 이용한 알고리
+
 ----- 종류
-      . Supervised Learning : 데이터에 정답이 있는 정답예측 모델(개/고양이 분류)
-      . Unsupervised Learning : 데이터에 정답이 없음(비슷한거 추천 알고리즘 활용)
+      . Supervised Learning : 학습 데이터에 정답이 있는 정답예측 모델(개/고양이 분류)
+      . Unsupervised Learning : 학습 데이터에 정답이 없음(비슷한거 추천 알고리즘 활용)
       . Reinforcement Learning : 게임학습
 
 ----- activation function
@@ -8,13 +45,13 @@
       . activation='swish'
       . activation function을 적용하지 않으면 hidden layer는 의미가 없어지며, Neural Network가 아님
 
------ 러닝머쉬이란
+----- 러닝머쉰이란
       . 예측값과 실제값의 오차를 최소화하는 가중치값 및 bios을 찾는 행위
 
 ----- learning rate optimizer
-      . loss 최소값을 효율적으로 빨리 찾기위한 도구(정답을 없고 여러개 적용후 선택)
+      . loss 최소값을 효율적으로 빨리 찾기위한 도구(정답은 없고 여러개 적용후 선택)
       . 효율적인 학습을 위한 최적화된 알고리즘
-      . 일반적으로 Adam 알고리즘 적용
+      . 일반적으로 adam 알고리즘 적용
 
 ----- programming VS. machine learning
       . programming : data + rule(특징, feature, 가중치) ==> answer
@@ -26,9 +63,9 @@
       . Subclassing : ???
 
 ----- MNIST 데이터
-      . 학습 데이터(mnist.train) : 학습지, 참고서 / 55,000건
-      . 테스트 데이터(mnist.text) : 모의고사      / 10,000건
-      . 검증 데이터(mnist.validation) : 본고사    /  5,000건
+      . 학습 데이터(mnist.train) : 학습지, 참고서 55,000건
+      . 테스트 데이터(mnist.text) : 모의고사      10,000건
+      . 검증 데이터(mnist.validation) : 본고사    5,000건
 
 ----- 데이터셋
       . xs: 학습 이미지 mnist.train.images
@@ -39,7 +76,7 @@
       . 서로 다른 여러 항목 중 하나일 확률을 계산할때 최적
 
 ----- softmax regression
-     예측 확률          가중치            입력값  바이어스(bias)
+     예측 확률           가중치             입력값  바이어스(bias)
      |y1|              |W11, W12, W13|   |x1|   |b1|
      |y2|     = softmax|W21, W22, W23| * |x2| + |b2|
      |y3|              |W31, W32, W33|   |x3|   |b3|
@@ -77,4 +114,43 @@
 ----- CNN(Convolution Neural Network)
       . Convolution Layer :
       . Max Pooling Layer : 특징적인 가장큰 숫자를 남기면서 이미지 size를 축소
-      . Flatten Layer
+      . Flatten Layer : data를 1차원으로 펼침
+
+----- activation='softmax'
+      . 10개중 하나를 선택해야 하는 case에 적용
+      . 보통 최종 Dense Layer에서 사용
+      . 10개 각각의 확률 중 가장 큰 것을 1로 만들고 나머지는 모두 0으로 만드는 방식
+
+----- 정규화(min-max 스케일링)
+      . x-x.min() / x.max()-x.min()
+      . 모든값이 0~1 사이에 존재
+      . 정규화를 하면 하강법(Gradient Descent)으로 최저점 접근이 수월하여
+      . 학습이 효과적(수렴속도가 빠름)으로 수행됨
+
+----- 표준화(거리 특성에 민감한 알고리즘에 필수 적용)
+      . train_scaled = train_x - mean() / 표준편차
+      . test_scaled = test_x - mean() / 표준편 # test_scaled에서도 train_x의 평균과 표준편차 적용
+      . 분포의 분산이 1이 되도록
+      . 상한, 하한이 없어 특정 알고리즘에서는 문제가 될 수 있음
+      . test_x를 전처리할 경우에도 train_scaled을 기준으로 처리함
+
+----- loss 최소화 찾기 메커니즘
+                      *
+                       *   * *
+      Local Optimum ==> * *   *     *
+                               *   *
+             Global Optimum ==> * *
+
+------ 과소적합(underfitting)
+       . 머신러닝 모델이 훈련 데이터보다 새로운 데이터(test데이터 혹은 실데이터)에서 성능이 높아지는 현상
+       . neighbors 수를 크게 할수록 훈련데이터와 dependency가 높아지므로 과소적합이 됨
+
+------ 과대적합(overfitting)
+       . 머신러닝 모델이 훈련 데이터보다 새로운 데이터(test데이터 혹은 실데이터)에서 성능이 낮아지는 현상
+       . 과소적합보다는 과대적합에 가까운 모델이 일반적임
+
+------ Dense층 정의시 고려사항
+       . 유닛(차원)을 늘리면 신경망이 더욱 복잡한 표현을 학습할 수 있지만 계산 비용이 커지고 원하지 않는 패턴을 학습할 수도 있음
+         즉, train_data에 대한 성능은 높아지지만 test_data에 대해서는 오히려 성능 저하의 요인이 될 수 있음
+       1. 얼마나 많은 층을 설정할 것인가?
+       2. 얼마나 많은 유닛(차원)을 설정할 것인가?
