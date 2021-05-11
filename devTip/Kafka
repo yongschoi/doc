@@ -1,15 +1,15 @@
 ----- Kafka 구성 유의사항
       Kafka를 위한 Zookeeper 클러스터를 별도의 장비에 구축하고, 해당 Zookeeper 클러스터는 Kafka만 사용하도록 하는 것을 권장
 
------ kafdrp
+----- kafdrop
       Kafka Topic 관리 도구
       https://dev.to/ekoutanov/kafdrop-an-open-source-kafka-web-ui-mbn
 
 ----- Kafka 용어
       . Zookeeper: Kafka 노드관리, Offset관리, 과반수 생존방식(5EA경우 3EA이상)으로 홀수로 구성
-      . Topic: 메시지 유통 채널(카톡채팅방). Partition 1EA 설정하면 순서보장 O, 2EA이상 설정하면 순서보장 X
-        * 순서를 보장받고 싶은 Topic을 구성하고 싶으면 Partition을 1로 설정.
-      . Partition: 메시지 분산 Node(Partiton내에서는 순서보장 O, Partition간에는 순서보장 X)
+      . Topic: 메시지 유통 채널(카톡채팅방). Partition 1EA 설정하면 순서보장 Ok, 2EA이상 설정하면 순서보장 No
+        * 순서를 보장받고 싶은 Topic을 구성하고 싶으면 Partition을 1EA로 설정.
+      . Partition: 메시지 분산 Node(Partiton내에서는 순서보장 Ok, Partition간에는 순서보장 No)
       . Offset: Partition내 메시지를 식별할 수 있는 유니크한 값(0부터 1씩 증가)
       . Producer: 해당 Topic에 메시지 기록. 실제로는 Partiton에 기록(default: Round-Robin)
       . Consumer Instance:
@@ -222,4 +222,4 @@
       4. producer sends messages 5, 6, 7
       5. consumer receives messages 5, 6, 7
 
-      위 3단계에서 consumer가 crashes되면 kafka에 offset 정보가 존재하므로 auto-offset-reset이 의미가 없지만 만약 kafka에도 consumer의 offset정보가 없을경우 auto-offset-reset설정이 latest(default)면 최근 offset부터 소비하고 earliest면 처음부터 다시 소비  
+      위 3단계에서 consumer가 crashes되면 kafka에 offset 정보가 존재하므로 auto-offset-reset이 의미가 없지만 만약 kafka에도 consumer의 offset정보가 없을경우 auto-offset-reset설정이 latest(default)면 최근 offset부터 소비하고 earliest면 처음부터 다시 소비

@@ -27,3 +27,29 @@
             Accept: application/vnd.example+json;version=1.0
 
       * Header를 이용할 경우 헤더값을 검사하기 위한 추가적인 로직이 필요함
+
+----- Rest API
+      -- Method
+         . GET: 멱등성, 안전 보장
+         . POST: 멱등성, 안전 보장하지 않음
+         . PUT: 멱등성 보장.
+                수정되지 않는 데이터도 전송해야함. 해당 데이터가 존재하지 않으면 Create
+
+                PUT /users/1
+                {
+                  "name": "hak"
+                  "level": 11
+                }
+
+                수정하고 싶은 값만 보낼 경우 PATCH
+
+                PATCH /users/1
+                {
+                  "level": 11
+                }
+
+         . DELETE: 멱등성 보장.
+
+         . OPTIONS: 지원 가능한 method 응담
+         . HEAD: 요청에 대한 Header만 응답한다. body가 없다.
+         . PATCH: PUT 대신 PATCH method 권장. 수정할 데이터만 전송 

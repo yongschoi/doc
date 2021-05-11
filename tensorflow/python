@@ -16,6 +16,7 @@
          1. 가상환경 실행
             $/home/yongschoi/py/anaconda3/bin/conda init
             $conda activate env
+            * 기본 실행환경 (base)
          2. 모듈설치
             (env)$pip3 install 모듈
             (env)$conda deactivate

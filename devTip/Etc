@@ -66,8 +66,8 @@
 
 ----- yongs-user/flex-product 이미지 아키텍처
       . yongs-user/yongs-product는 back-end에서 Minio Java API로 image url를 셋팅한다.
-      . flex-product는 front-end에서 Minio Javascript API로 image url를 셋팅한다.
-        * Minio Javascript API는 callback 함수로 제공하므로 image loadking 이슈가 존재함 -> ProductControl.vue 참고
+      #. flex-product는 front-end에서 Minio Javascript API로 image url를 셋팅한다.
+      #  * Minio Javascript API는 callback 함수로 제공하므로 image loading 이슈가 존재함 -> ProductControl.vue 참고
 
 ----- Serveless Lamda 에 적합한 서비스 유형
       1. 비정기적으로 대량 traffic처리가 필요한 서비스

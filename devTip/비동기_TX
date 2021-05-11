@@ -1,8 +1,9 @@
------ SAGA
+----- SAGA 패턴
       . 주문-재고-결제-배달과 같이 여러서비스에 걸친 data consistency 유지방안
 
------ CQRS(Command Query Responsibility Segregation)
+----- CQRS(Command and Query Responsibility Segregation) 패턴
       . CUD/R 분리
+      . Command와 Query의 분리
 
 ----- Transactional Outbox
       . Reliably send and receive messages
