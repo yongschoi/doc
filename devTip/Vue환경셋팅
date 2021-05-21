@@ -11,7 +11,7 @@
 ----- Vue 프로젝트 개발환경 만들기(vue-cli3 이용)
       # vue create my-project
 
------ vuetify 설치
+----- vuetify 설치(vue 2와 호환 onl)
       # vue add vuetify
 
 ----- vue-router 설치
@@ -22,7 +22,7 @@
 
 ----- minio 설치
       # npm install --save minio
-      
+
 ----- Vue 개발환경 시작 및 build
       해당 프로젝트 폴더에서
       npm run serve (로컬서버구동)

@@ -51,7 +51,7 @@
         ----------> B() // 2초
         ----------> C() // 3초
         Total(5초)
-        - 장점 : request 증가에 영향 미비
+        - 장점 : request 증가에 영향 미비(고정된 쓰레드와 메모리로 확장가능) 
         - 단점 : 흐름제어 어려움, 개발이 어려움
 
 ----- Synchronous Non-blocking Vs. Asynchronous Non-blocking

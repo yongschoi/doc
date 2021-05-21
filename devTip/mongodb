@@ -1,5 +1,62 @@
------ docker에서 mongodb 접속
-      docker exec -it bd32732a7da9 mongo
+----- docker auth 기동
+      docker run -p 27017:27017 \
+       -v /etc/localtime:/etc/localtime:ro \
+       -e TZ=Asia/Seoul \
+       -v /home/yongschoi/docker/data/mongo:/data/db  \
+       -d --rm --name mongo-db --network=YONGS-NET \
+       mongo --auth # --auth 설정으로 기동 
+
+----- mongodb 최초접속
+      docker exec -it mongo-db mongo admin
+
+----- admin 계정생성
+      db.createUser(
+        {
+          user:'admin',
+          pwd:'!admin#',
+          roles:[
+            {
+              role: "userAdminAnyDatabase",
+              db: "admin"
+            }
+          ]
+        }
+      )
+
+----- admin 계정으로 접속
+      docker exec -it mongo-db mongo -u admin -p '!admin#' --authenticationDatabase admin
+
+----- 사용자 계정생성 with roles
+      db.createUser(
+        {
+          user: "scott",
+          pwd: "tiger",
+          roles: [
+            {
+              role: "readWrite",
+              db: "flex"
+            },
+            {
+              role: "readWrite",
+              db: "evc"
+            }
+          ]
+        }
+      )
+
+----- 사용자 계정으로 접속
+      docker exec -it mongo-db mongo -u scott -p tiger
+
+----- spring mongodb 설정
+      spring:
+        data:
+          mongodb:
+            authentication-database: admin #이 설정이 없으면 --auth fail
+            username: scott
+            password: tiger
+            host: localhost
+            port: 27017
+            database: evc
 
 ----- 데이터베이스 목록조회
       > show dbs
