@@ -224,7 +224,7 @@
 
 ----- 자연어 처리단계
       1) 수집(Acquisition)
-      2) 점검 및 탐색(Inspection and exploration) : 변수유형, 데이터 특징 분석
+      2) 점검 및 탐색(Inspection and exploration) : 변수유형, 데이터 특징 분석(최대,최소,분포 등)
       3) 전처리 및 정제(Preprocessing and Cleaning) : 토큰화, 정규화, 불용어 제거 등
       4) 모델링 및 훈련(Modeling and Training) : train_x, val_x
       5) 평가(Evaluation) : test_x

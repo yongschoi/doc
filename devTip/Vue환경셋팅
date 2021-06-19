@@ -2,8 +2,8 @@
       Node js를 설치하면 npm이 설치됨
 
 ----- Vue-CLI 3 설치
-      npm install -g @vue/cli
-      npm install -g @vue/cli-init
+      sudo npm install -g @vue/cli
+      sudo npm install -g @vue/cli-init
 
 ----- npm모듈 업그레이드
       npm i 모듈@버전 --> 예) npm i minimist@1.2.3
@@ -12,7 +12,7 @@
       # vue create my-project
 
 ----- vuetify 설치(vue 2와 호환 onl)
-      # vue add vuetify
+      # sudo vue add vuetify
 
 ----- vue-router 설치
       # npm install --save vue-router
