@@ -1,3 +1,29 @@
+----- 원격 통신방식
+      - 전문: 데이터 format을 정의하여 소켓통신
+        * XML, JSON을 사용하면 Parser가 필요함
+      - API(Application Programmin Interface): 어플리케이션 레벨에서 데이터 송수신 ex) Google Map API
+        . 원격 API: 인터넷이 아닌 통신 ??
+        . 웹 API: HTTP 인터넷 통신으로 XML, JSON
+        . SOAP: 프로토콜
+        . REST: 아키텍처 스타일
+
+----- API 정책유형
+      . Private: 내부에서만 사용
+      . Partner: 특정 파트너와 공유
+      . Public: 오픈
+
+----- HTTP 통신 VS. Socket 통신
+      - HTTP 통신
+        . Client가 요청(Request)을 보내는 경우에만 Server가 응답(Response)하는 단방향 통신
+        . Response 후에는 연결을 바로 종료
+        . 실시간 연결이 아닌 필요한 경우에만 Server로 요청
+
+      - Socket 통신
+        . Client Socket과 Server Socket이 IP/Port기반으로 계속 연결을 유지하는 양방향 통신
+        . 실시간으로 데이터를 주고받는 상황
+        . 동영상 Streaming이나 온라인 게임에 활용
+        . https://recipes4dev.tistory.com/153
+
 ----- API first Design
       1. API 사용자 관점에서 가장먼저 Design 되어야 한다.(이후 application 개발)
       2. application의 변경은 자주 발생 가능하나 API는 변경이 잦으면 안된다.
@@ -52,4 +78,4 @@
 
          . OPTIONS: 지원 가능한 method 응담
          . HEAD: 요청에 대한 Header만 응답한다. body가 없다.
-         . PATCH: PUT 대신 PATCH method 권장. 수정할 데이터만 전송 
+         . PATCH: PUT 대신 PATCH method 권장. 수정할 데이터만 전송
